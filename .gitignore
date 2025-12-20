@@ -43,3 +43,6 @@ __screenshots__/
 Thumbs.db
 .playwright-mcp/*.png
 .claude/settings.local.json
+
+*storybook.log
+storybook-static
