@@ -1,0 +1,53 @@
+<div class="map-container">
+  @if (isLoading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Loading map data...</p>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="error">
+      <p>{{ error() }}</p>
+    </div>
+  }
+
+  <div class="map-wrapper" [class.hidden]="isLoading() || error()">
+    <canvas
+      #mapCanvas
+      [width]="width()"
+      [height]="height()"
+      class="map-canvas"
+    ></canvas>
+
+    <div class="controls">
+      <div class="control-group">
+        <button
+          class="control-btn reset-btn"
+          (click)="resetView()"
+        >
+          Reset View
+        </button>
+      </div>
+
+      <div class="control-group location-buttons">
+        @for (location of getLocations(); track location.name) {
+          <button
+            class="control-btn location-btn"
+            (click)="zoomToLocation(location.name.toLowerCase().replace(' ', '-'))"
+          >
+            {{ location.name }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="fps-counter" [class.warning]="!isFpsHealthy()">
+      <div class="fps-value">{{ performanceService.currentFps() }}</div>
+      <div class="fps-label">FPS</div>
+      <div class="fps-stats">
+        <small>Avg: {{ performanceService.averageFps() }}</small>
+      </div>
+    </div>
+  </div>
+</div>
