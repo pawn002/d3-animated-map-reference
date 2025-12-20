@@ -92,10 +92,8 @@ export class AnimationControllerService {
   ): void {
     const { center, scale } = extent;
 
-    // First zoom to scale, then pan to center
-    this.geoZoomService.zoomTo(element, scale, duration / 2, () => {
-      this.geoZoomService.panTo(element, center, duration / 2, callback);
-    });
+    // Animate projection to center and scale
+    this.geoZoomService.animateTo(center, scale, duration, callback);
   }
 
   /**

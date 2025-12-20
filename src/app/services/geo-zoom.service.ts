@@ -6,212 +6,359 @@ import { ZoomConfig, ZoomEvent } from '../models/map.types';
 
 /**
  * GeoZoom Service
- * Ported from d3-geo-zoom but adapted for flat projections (equirectangular, etc.)
- * Handles zoom and pan interactions for geographic projections
+ * Handles zoom and pan interactions by updating the projection directly
+ * This causes the map to re-render with proper geographic transformations
  */
 @Injectable({
   providedIn: 'root',
 })
 export class GeoZoomService {
-  private zoomBehavior?: d3.ZoomBehavior<Element, unknown>;
   private projection?: GeoProjection;
-  private initialScale = 1;
-  private initialTranslate: [number, number] = [0, 0];
+  private element?: Element;
+  private width = 0;
+  private height = 0;
 
-  // Observable for zoom/pan events
-  public onZoomChange = new Subject<ZoomEvent>();
+  // Projection state
+  private currentScale = 1;
+  private currentRotation: [number, number, number] = [0, 0, 0];
+  private currentCenter: [number, number] = [0, 0];
+
+  // Initial state
+  private initialScale = 1;
+  private initialRotation: [number, number, number] = [0, 0, 0];
+  private initialCenter: [number, number] = [0, 0];
+
+  // Config
+  private scaleExtent: [number, number] = [0.5, 20];
+
+  // Mouse state
+  private isDragging = false;
+  private lastMousePos: [number, number] = [0, 0];
+
+  // Observable for projection changes
+  public onProjectionChange = new Subject<void>();
 
   /**
-   * Initialize zoom behavior on a DOM element
+   * Initialize interaction handlers on a DOM element
    */
   init(
     element: Element,
     projection: GeoProjection,
+    width: number,
+    height: number,
     config: ZoomConfig = { scaleExtent: [0.5, 20] }
   ): void {
     this.projection = projection;
+    this.element = element;
+    this.width = width;
+    this.height = height;
+    this.scaleExtent = config.scaleExtent;
 
     // Store initial projection state
     this.initialScale = projection.scale();
-    this.initialTranslate = projection.translate();
+    this.currentScale = this.initialScale;
 
-    // Create zoom behavior
-    this.zoomBehavior = d3
-      .zoom<Element, unknown>()
-      .scaleExtent(config.scaleExtent)
-      .on('zoom', (event: d3.D3ZoomEvent<Element, unknown>) => {
-        this.handleZoom(event);
-      });
+    const center = projection.center?.();
+    if (center) {
+      this.initialCenter = center as [number, number];
+      this.currentCenter = [...this.initialCenter];
+    }
 
-    // Apply zoom behavior to element
-    d3.select(element).call(this.zoomBehavior);
+    const rotate = projection.rotate?.();
+    if (rotate) {
+      this.initialRotation = rotate as [number, number, number];
+      this.currentRotation = [...this.initialRotation];
+    }
 
-    // Prevent default double-click zoom behavior
-    d3.select(element).on('dblclick.zoom', null);
+    // Add event listeners
+    this.setupEventListeners(element);
   }
 
   /**
-   * Handle zoom events
+   * Setup mouse and wheel event listeners
    */
-  private handleZoom(event: d3.D3ZoomEvent<Element, unknown>): void {
+  private setupEventListeners(element: Element): void {
+    const el = element as HTMLElement;
+
+    // Mouse drag for panning
+    el.addEventListener('mousedown', this.handleMouseDown.bind(this));
+    el.addEventListener('mousemove', this.handleMouseMove.bind(this));
+    el.addEventListener('mouseup', this.handleMouseUp.bind(this));
+    el.addEventListener('mouseleave', this.handleMouseUp.bind(this));
+
+    // Wheel for zooming
+    el.addEventListener('wheel', this.handleWheel.bind(this), { passive: false });
+
+    // Touch support
+    el.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
+    el.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
+    el.addEventListener('touchend', this.handleTouchEnd.bind(this));
+  }
+
+  /**
+   * Handle mouse down - start dragging
+   */
+  private handleMouseDown(event: MouseEvent): void {
+    event.preventDefault();
+    this.isDragging = true;
+    this.lastMousePos = [event.clientX, event.clientY];
+    (this.element as HTMLElement).style.cursor = 'grabbing';
+  }
+
+  /**
+   * Handle mouse move - update projection during drag
+   */
+  private handleMouseMove(event: MouseEvent): void {
+    if (!this.isDragging || !this.projection) return;
+
+    const dx = event.clientX - this.lastMousePos[0];
+    const dy = event.clientY - this.lastMousePos[1];
+    this.lastMousePos = [event.clientX, event.clientY];
+
+    // Calculate rotation change based on mouse movement
+    // Sensitivity factor - adjust as needed
+    const sensitivity = 0.25;
+    const rotationX = -dy * sensitivity / this.currentScale;
+    const rotationY = -dx * sensitivity / this.currentScale;
+
+    // Update rotation
+    this.currentRotation = [
+      this.currentRotation[0] + rotationY,
+      this.currentRotation[1] + rotationX,
+      this.currentRotation[2]
+    ];
+
+    // Apply to projection
+    if (this.projection.rotate) {
+      this.projection.rotate(this.currentRotation);
+    }
+
+    // Also update center for projections that support it
+    if (this.projection.center) {
+      this.currentCenter = [
+        this.currentCenter[0] - rotationY,
+        this.currentCenter[1] - rotationX
+      ];
+      this.projection.center(this.currentCenter);
+    }
+
+    // Trigger re-render
+    this.onProjectionChange.next();
+  }
+
+  /**
+   * Handle mouse up - stop dragging
+   */
+  private handleMouseUp(): void {
+    this.isDragging = false;
+    if (this.element) {
+      (this.element as HTMLElement).style.cursor = 'grab';
+    }
+  }
+
+  /**
+   * Handle wheel - zoom in/out
+   */
+  private handleWheel(event: WheelEvent): void {
+    event.preventDefault();
     if (!this.projection) return;
 
-    const { transform } = event;
+    // Calculate new scale
+    const delta = -event.deltaY;
+    const scaleFactor = delta > 0 ? 1.1 : 0.9;
+    let newScale = this.currentScale * scaleFactor;
 
-    // For flat projections (equirectangular), we can directly apply scale and translate
-    // Update projection scale
-    const newScale = this.initialScale * transform.k;
+    // Clamp to scale extent
+    newScale = Math.max(this.scaleExtent[0] * this.initialScale,
+                       Math.min(this.scaleExtent[1] * this.initialScale, newScale));
+
+    this.currentScale = newScale;
     this.projection.scale(newScale);
 
-    // Update projection translate
-    const newTranslate: [number, number] = [
-      this.initialTranslate[0] + transform.x,
-      this.initialTranslate[1] + transform.y,
-    ];
-    this.projection.translate(newTranslate);
-
-    // Get geographic center
-    const center = this.projection.invert?.([
-      this.initialTranslate[0],
-      this.initialTranslate[1],
-    ]) || [0, 0];
-
-    // Emit zoom event
-    this.onZoomChange.next({
-      scale: transform.k,
-      translate: [transform.x, transform.y],
-      center: center as [number, number],
-    });
+    // Trigger re-render
+    this.onProjectionChange.next();
   }
 
   /**
-   * Programmatically zoom to a specific scale
+   * Touch support - start
    */
-  zoomTo(
-    element: Element,
+  private touchStartPos: [number, number] = [0, 0];
+  private handleTouchStart(event: TouchEvent): void {
+    if (event.touches.length === 1) {
+      event.preventDefault();
+      this.isDragging = true;
+      const touch = event.touches[0];
+      this.lastMousePos = [touch.clientX, touch.clientY];
+      this.touchStartPos = [touch.clientX, touch.clientY];
+    }
+  }
+
+  /**
+   * Touch support - move
+   */
+  private handleTouchMove(event: TouchEvent): void {
+    if (event.touches.length === 1 && this.isDragging) {
+      event.preventDefault();
+      const touch = event.touches[0];
+
+      const dx = touch.clientX - this.lastMousePos[0];
+      const dy = touch.clientY - this.lastMousePos[1];
+      this.lastMousePos = [touch.clientX, touch.clientY];
+
+      if (!this.projection) return;
+
+      const sensitivity = 0.25;
+      const rotationX = -dy * sensitivity / this.currentScale;
+      const rotationY = -dx * sensitivity / this.currentScale;
+
+      this.currentRotation = [
+        this.currentRotation[0] + rotationY,
+        this.currentRotation[1] + rotationX,
+        this.currentRotation[2]
+      ];
+
+      if (this.projection.rotate) {
+        this.projection.rotate(this.currentRotation);
+      }
+
+      if (this.projection.center) {
+        this.currentCenter = [
+          this.currentCenter[0] - rotationY,
+          this.currentCenter[1] - rotationX
+        ];
+        this.projection.center(this.currentCenter);
+      }
+
+      this.onProjectionChange.next();
+    }
+  }
+
+  /**
+   * Touch support - end
+   */
+  private handleTouchEnd(): void {
+    this.isDragging = false;
+  }
+
+  /**
+   * Programmatically set projection center
+   */
+  setCenter(center: [number, number], triggerRender = true): void {
+    if (!this.projection) return;
+
+    this.currentCenter = center;
+
+    if (this.projection.center) {
+      this.projection.center(center);
+    }
+
+    // For rotation-based panning
+    if (this.projection.rotate) {
+      this.currentRotation = [-center[0], -center[1], 0];
+      this.projection.rotate(this.currentRotation);
+    }
+
+    if (triggerRender) {
+      this.onProjectionChange.next();
+    }
+  }
+
+  /**
+   * Programmatically set projection scale
+   */
+  setScale(scale: number, triggerRender = true): void {
+    if (!this.projection) return;
+
+    this.currentScale = this.initialScale * scale;
+    this.projection.scale(this.currentScale);
+
+    if (triggerRender) {
+      this.onProjectionChange.next();
+    }
+  }
+
+  /**
+   * Animate to a specific center and scale
+   */
+  animateTo(
+    center: [number, number],
     scale: number,
     duration: number = 750,
     callback?: () => void
   ): void {
-    if (!this.zoomBehavior) return;
+    if (!this.projection) return;
 
-    const selection = d3.select(element);
-    const transition = selection.transition().duration(duration);
+    const startCenter = [...this.currentCenter];
+    const startScale = this.currentScale / this.initialScale;
+    const startTime = Date.now();
 
-    this.zoomBehavior.scaleTo(transition as any, scale);
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const t = Math.min(elapsed / duration, 1);
 
-    if (callback) {
-      transition.on('end', callback);
-    }
+      // Easing function
+      const eased = d3.easeCubicInOut(t);
+
+      // Interpolate center
+      const interpCenter: [number, number] = [
+        startCenter[0] + (center[0] - startCenter[0]) * eased,
+        startCenter[1] + (center[1] - startCenter[1]) * eased
+      ];
+
+      // Interpolate scale
+      const interpScale = startScale + (scale - startScale) * eased;
+
+      // Update projection
+      this.setCenter(interpCenter, false);
+      this.setScale(interpScale, false);
+
+      // Trigger render
+      this.onProjectionChange.next();
+
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        callback?.();
+      }
+    };
+
+    requestAnimationFrame(animate);
   }
 
   /**
-   * Programmatically pan to a geographic location
+   * Reset projection to initial state
    */
-  panTo(
-    element: Element,
-    coordinates: [number, number],
-    duration: number = 750,
-    callback?: () => void
-  ): void {
-    if (!this.projection || !this.zoomBehavior) return;
-
-    // Convert geographic coordinates to pixel coordinates
-    const pixelCoords = this.projection(coordinates);
-    if (!pixelCoords) return;
-
-    const selection = d3.select(element);
-
-    // Calculate the transform needed to center the point
-    const [x, y] = pixelCoords;
-    const [centerX, centerY] = this.initialTranslate;
-
-    const dx = centerX - x;
-    const dy = centerY - y;
-
-    // Get current transform
-    const currentTransform = d3.zoomTransform(element);
-
-    // Create new transform
-    const newTransform = d3.zoomIdentity
-      .translate(currentTransform.x + dx, currentTransform.y + dy)
-      .scale(currentTransform.k);
-
-    // Apply transform with transition
-    const transition = selection.transition().duration(duration);
-
-    this.zoomBehavior.transform(transition as any, newTransform);
-
-    if (callback) {
-      transition.on('end', callback);
-    }
+  reset(duration: number = 750, callback?: () => void): void {
+    this.animateTo(this.initialCenter, 1, duration, callback);
   }
 
   /**
-   * Zoom to a specific geographic extent (bounding box)
+   * Get current projection state
    */
-  zoomToExtent(
-    element: Element,
-    bounds: [[number, number], [number, number]],
-    width: number,
-    height: number,
-    duration: number = 750,
-    callback?: () => void
-  ): void {
-    if (!this.projection || !this.zoomBehavior) return;
-
-    const [[x0, y0], [x1, y1]] = bounds.map((d) => this.projection!(d)!);
-
-    const selection = d3.select(element);
-
-    // Calculate scale and translate to fit bounds
-    const dx = x1 - x0;
-    const dy = y1 - y0;
-    const scale = Math.min(width / dx, height / dy) * 0.9;
-
-    const translate: [number, number] = [
-      width / 2 - (x0 + x1) / 2 * scale,
-      height / 2 - (y0 + y1) / 2 * scale,
-    ];
-
-    const transform = d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale);
-
-    const transition = selection.transition().duration(duration);
-
-    this.zoomBehavior.transform(transition as any, transform);
-
-    if (callback) {
-      transition.on('end', callback);
-    }
+  getCurrentState() {
+    return {
+      center: [...this.currentCenter] as [number, number],
+      scale: this.currentScale / this.initialScale,
+      rotation: [...this.currentRotation] as [number, number, number]
+    };
   }
 
   /**
-   * Reset zoom to initial state
-   */
-  reset(element: Element, duration: number = 750): void {
-    if (!this.zoomBehavior) return;
-
-    const selection = d3.select(element);
-    const transition = selection.transition().duration(duration);
-
-    this.zoomBehavior.transform(transition as any, d3.zoomIdentity);
-  }
-
-  /**
-   * Get current zoom transform
-   */
-  getCurrentTransform(element: Element): d3.ZoomTransform {
-    return d3.zoomTransform(element);
-  }
-
-  /**
-   * Destroy zoom behavior
+   * Destroy and cleanup
    */
   destroy(element: Element): void {
-    if (this.zoomBehavior) {
-      d3.select(element).on('.zoom', null);
-      this.zoomBehavior = undefined;
-    }
-    this.onZoomChange.complete();
+    const el = element as HTMLElement;
+
+    // Remove event listeners
+    el.removeEventListener('mousedown', this.handleMouseDown.bind(this));
+    el.removeEventListener('mousemove', this.handleMouseMove.bind(this));
+    el.removeEventListener('mouseup', this.handleMouseUp.bind(this));
+    el.removeEventListener('mouseleave', this.handleMouseUp.bind(this));
+    el.removeEventListener('wheel', this.handleWheel.bind(this));
+    el.removeEventListener('touchstart', this.handleTouchStart.bind(this));
+    el.removeEventListener('touchmove', this.handleTouchMove.bind(this));
+    el.removeEventListener('touchend', this.handleTouchEnd.bind(this));
+
+    this.onProjectionChange.complete();
   }
 }

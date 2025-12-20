@@ -90,9 +90,15 @@ export class MapContainerComponent implements OnInit, OnDestroy {
           );
 
     // Initialize zoom behavior
-    this.geoZoom.init(this.mapContainer.nativeElement, this.projection, {
-      scaleExtent: [0.5, 20],
-    });
+    this.geoZoom.init(
+      this.mapContainer.nativeElement,
+      this.projection,
+      this.width,
+      this.height,
+      {
+        scaleExtent: [0.5, 20],
+      }
+    );
 
     // Render initial data if available
     if (this.geoData) {
@@ -104,10 +110,9 @@ export class MapContainerComponent implements OnInit, OnDestroy {
    * Setup event listeners
    */
   private setupEventListeners(): void {
-    // Listen to zoom changes
-    this.geoZoom.onZoomChange.subscribe((event) => {
-      this.handleZoomChange(event);
-      this.zoomChange.emit(event);
+    // Listen to projection changes
+    this.geoZoom.onProjectionChange.subscribe(() => {
+      this.handleProjectionChange();
     });
 
     // Listen to FPS updates
@@ -131,14 +136,14 @@ export class MapContainerComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Handle zoom change events
+   * Handle projection change events - re-render the map
    */
-  private handleZoomChange(event: ZoomEvent): void {
+  private handleProjectionChange(): void {
     if (this.renderContext && this.projection && this.geoData) {
       // Update projection in render context
       this.mapRenderer.updateProjection(this.renderContext, this.projection);
 
-      // Re-render data
+      // Re-render data with updated projection
       this.renderData(this.geoData);
     }
   }
@@ -196,44 +201,37 @@ export class MapContainerComponent implements OnInit, OnDestroy {
    * Reset zoom to initial state
    */
   resetZoom(): void {
-    if (this.mapContainer) {
-      this.geoZoom.reset(this.mapContainer.nativeElement);
-    }
+    this.geoZoom.reset();
   }
 
   /**
    * Zoom to specific scale
    */
   zoomTo(scale: number, duration: number = 750): void {
-    if (this.mapContainer) {
-      this.geoZoom.zoomTo(this.mapContainer.nativeElement, scale, duration);
-    }
+    this.geoZoom.setScale(scale);
   }
 
   /**
    * Pan to specific coordinates
    */
   panTo(coordinates: [number, number], duration: number = 750): void {
-    if (this.mapContainer) {
-      this.geoZoom.panTo(this.mapContainer.nativeElement, coordinates, duration);
-    }
+    this.geoZoom.animateTo(coordinates, this.geoZoom.getCurrentState().scale, duration);
   }
 
   /**
-   * Zoom to extent
+   * Zoom to extent (center and scale to fit bounds)
    */
   zoomToExtent(
     bounds: [[number, number], [number, number]],
     duration: number = 750
   ): void {
-    if (this.mapContainer) {
-      this.geoZoom.zoomToExtent(
-        this.mapContainer.nativeElement,
-        bounds,
-        this.width,
-        this.height,
-        duration
-      );
-    }
+    // Calculate center of bounds
+    const center: [number, number] = [
+      (bounds[0][0] + bounds[1][0]) / 2,
+      (bounds[0][1] + bounds[1][1]) / 2
+    ];
+
+    // For now, use a fixed scale - can be improved to calculate optimal scale
+    this.geoZoom.animateTo(center, 2, duration);
   }
 }
