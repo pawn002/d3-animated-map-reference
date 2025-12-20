@@ -35,8 +35,28 @@ export class GeoZoomService {
   private isDragging = false;
   private lastMousePos: [number, number] = [0, 0];
 
+  // Bound event handlers (store references for cleanup)
+  private boundMouseDown: (e: MouseEvent) => void;
+  private boundMouseMove: (e: MouseEvent) => void;
+  private boundMouseUp: () => void;
+  private boundWheel: (e: WheelEvent) => void;
+  private boundTouchStart: (e: TouchEvent) => void;
+  private boundTouchMove: (e: TouchEvent) => void;
+  private boundTouchEnd: () => void;
+
   // Observable for projection changes
   public onProjectionChange = new Subject<void>();
+
+  constructor() {
+    // Bind event handlers once
+    this.boundMouseDown = this.handleMouseDown.bind(this);
+    this.boundMouseMove = this.handleMouseMove.bind(this);
+    this.boundMouseUp = this.handleMouseUp.bind(this);
+    this.boundWheel = this.handleWheel.bind(this);
+    this.boundTouchStart = this.handleTouchStart.bind(this);
+    this.boundTouchMove = this.handleTouchMove.bind(this);
+    this.boundTouchEnd = this.handleTouchEnd.bind(this);
+  }
 
   /**
    * Initialize interaction handlers on a DOM element
@@ -80,19 +100,24 @@ export class GeoZoomService {
   private setupEventListeners(element: Element): void {
     const el = element as HTMLElement;
 
+    // Make element focusable for wheel events
+    if (!el.hasAttribute('tabindex')) {
+      el.setAttribute('tabindex', '0');
+    }
+
     // Mouse drag for panning
-    el.addEventListener('mousedown', this.handleMouseDown.bind(this));
-    el.addEventListener('mousemove', this.handleMouseMove.bind(this));
-    el.addEventListener('mouseup', this.handleMouseUp.bind(this));
-    el.addEventListener('mouseleave', this.handleMouseUp.bind(this));
+    el.addEventListener('mousedown', this.boundMouseDown);
+    el.addEventListener('mousemove', this.boundMouseMove);
+    el.addEventListener('mouseup', this.boundMouseUp);
+    el.addEventListener('mouseleave', this.boundMouseUp);
 
     // Wheel for zooming
-    el.addEventListener('wheel', this.handleWheel.bind(this), { passive: false });
+    el.addEventListener('wheel', this.boundWheel, { passive: false });
 
     // Touch support
-    el.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
-    el.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
-    el.addEventListener('touchend', this.handleTouchEnd.bind(this));
+    el.addEventListener('touchstart', this.boundTouchStart, { passive: false });
+    el.addEventListener('touchmove', this.boundTouchMove, { passive: false });
+    el.addEventListener('touchend', this.boundTouchEnd);
   }
 
   /**
@@ -350,14 +375,14 @@ export class GeoZoomService {
     const el = element as HTMLElement;
 
     // Remove event listeners
-    el.removeEventListener('mousedown', this.handleMouseDown.bind(this));
-    el.removeEventListener('mousemove', this.handleMouseMove.bind(this));
-    el.removeEventListener('mouseup', this.handleMouseUp.bind(this));
-    el.removeEventListener('mouseleave', this.handleMouseUp.bind(this));
-    el.removeEventListener('wheel', this.handleWheel.bind(this));
-    el.removeEventListener('touchstart', this.handleTouchStart.bind(this));
-    el.removeEventListener('touchmove', this.handleTouchMove.bind(this));
-    el.removeEventListener('touchend', this.handleTouchEnd.bind(this));
+    el.removeEventListener('mousedown', this.boundMouseDown);
+    el.removeEventListener('mousemove', this.boundMouseMove);
+    el.removeEventListener('mouseup', this.boundMouseUp);
+    el.removeEventListener('mouseleave', this.boundMouseUp);
+    el.removeEventListener('wheel', this.boundWheel);
+    el.removeEventListener('touchstart', this.boundTouchStart);
+    el.removeEventListener('touchmove', this.boundTouchMove);
+    el.removeEventListener('touchend', this.boundTouchEnd);
 
     this.onProjectionChange.complete();
   }
