@@ -165,40 +165,35 @@ export class MapService {
    * Calculate projection parameters to fit geographic bounds in viewport
    */
   private fitBounds(bounds: [[number, number], [number, number]]): ProjectionParameters {
-    // Create a temporary projection to calculate the pixel coordinates
+    // Create GeoJSON box from bounds for fitExtent
+    const geoBox = {
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[
+          [bounds[0][0], bounds[0][1]],  // SW corner
+          [bounds[1][0], bounds[0][1]],  // SE corner
+          [bounds[1][0], bounds[1][1]],  // NE corner
+          [bounds[0][0], bounds[1][1]],  // NW corner
+          [bounds[0][0], bounds[0][1]]   // Close polygon
+        ]]
+      }
+    };
+
+    // Create temp projection and use D3's fitExtent to calculate correct parameters
     const tempProjection = geoMercator();
+    const padding = 50;  // pixels
 
-    // Project the bounds corners
-    const [[west, south], [east, north]] = bounds;
-    const topLeft = tempProjection([west, north])!;
-    const bottomRight = tempProjection([east, south])!;
-
-    // Calculate the bounding box dimensions in projection space
-    const boundsWidth = bottomRight[0] - topLeft[0];
-    const boundsHeight = bottomRight[1] - topLeft[1];
-
-    // Add padding (10% of viewport)
-    const padding = 0.1;
-    const effectiveWidth = this.width * (1 - padding);
-    const effectiveHeight = this.height * (1 - padding);
-
-    // Calculate scale to fit bounds
-    const scale = Math.min(
-      effectiveWidth / boundsWidth,
-      effectiveHeight / boundsHeight
+    tempProjection.fitExtent(
+      [[padding, padding], [this.width - padding, this.height - padding]],
+      geoBox as any
     );
 
-    // Calculate center of bounds
-    const centerX = (topLeft[0] + bottomRight[0]) / 2;
-    const centerY = (topLeft[1] + bottomRight[1]) / 2;
-
-    // Calculate translate to center the bounds
-    const translate: [number, number] = [
-      this.width / 2 - centerX * scale,
-      this.height / 2 - centerY * scale
-    ];
-
-    return { scale, translate };
+    // Extract the calculated parameters
+    return {
+      scale: tempProjection.scale(),
+      translate: tempProjection.translate() as [number, number]
+    };
   }
 
   /**
@@ -241,8 +236,8 @@ export class MapService {
         this.baselineScale = this.projection.scale();
         this.baselineTranslate = this.projection.translate();
 
-        // Reset zoom behavior transform to identity
-        select(this.canvas).call(this.zoomBehavior.transform, zoomIdentity);
+        // Reset zoom transform to identity without triggering events
+        this.zoomBehavior.transform(select(this.canvas) as any, zoomIdentity);
       });
   }
 
