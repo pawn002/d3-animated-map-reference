@@ -1,18 +1,21 @@
 <div class="app-container">
   <header class="app-header">
     <h1>{{ title() }}</h1>
+
     <p>{{ subtitle() }}</p>
+
+    <hr>
   </header>
 
   <main class="app-main">
     <div class="map-section">
       <app-map-container
-        [width]="960"
-        [height]="600"
+        [width]="566"
+        [height]="320"
         [renderMode]="'svg'"
         [geoData]="geoData()"
         (fpsUpdate)="handleFpsUpdate($event)"
-      />
+/>
     </div>
 
     <aside class="controls-panel">
@@ -21,7 +24,7 @@
       <section class="control-group">
         <h3>User Interactions</h3>
         <p class="info-text">
-          • <strong>Click and drag</strong> to pan<br />
+          • <strong>Click and drag</strong> to pan<br/>
           • <strong>Scroll</strong> to zoom in/out
         </p>
         <button (click)="resetMap()" class="btn btn-secondary">Reset View</button>
@@ -43,11 +46,11 @@
         <h3>Performance</h3>
         @if (currentFps() > 0) {
           <div class="performance-indicator" [class.fps-good]="currentFps() >= 23">
-            <span class="fps-value">{{ currentFps() }} FPS</span>
-            <span class="fps-status">
-              {{ currentFps() >= 23 ? '✓ Target Met (>23fps)' : '⚠ Below Target' }}
-            </span>
-          </div>
+          <span class="fps-value">{{ currentFps() }} FPS</span>
+          <span class="fps-status">
+            {{ currentFps() >= 23 ? '✓ Target Met (>23fps)' : '⚠ Below Target' }}
+          </span>
+        </div>
         } @else {
           <p class="info-text">Start an animation to monitor FPS</p>
         }
@@ -56,10 +59,14 @@
       <section class="control-group">
         <h3>Technical Details</h3>
         <ul class="tech-list">
-          <li><strong>Projection:</strong> Equirectangular (flat)</li>
-          <li><strong>Renderer:</strong> SVG (Canvas-ready)</li>
-          <li><strong>Data Format:</strong> GeoJSON</li>
-          <li><strong>Framework:</strong> Angular + D3</li>
+          <li>
+            <strong>Projection:</strong> Equirectangular (flat)</li>
+          <li>
+            <strong>Renderer:</strong> SVG (Canvas-ready)</li>
+          <li>
+            <strong>Data Format:</strong> GeoJSON</li>
+          <li>
+            <strong>Framework:</strong> Angular + D3</li>
         </ul>
       </section>
     </aside>
@@ -75,4 +82,4 @@
   </footer>
 </div>
 
-<router-outlet />
+<router-outlet/>

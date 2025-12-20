@@ -15,11 +15,11 @@
 
     p {
       font-size: 1.1rem;
+      margin-bottom: 1em;
     }
   }
 
   .app-main {
-    border: 2px dashed coral;
     display: flex;
     gap: 2rem;
 
@@ -53,6 +53,7 @@
 .map-section {
   display: flex;
   overflow: auto;
+  justify-content: center;
 }
 
 .controls-panel {
