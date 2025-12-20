@@ -142,30 +142,20 @@ export class GeoZoomService {
     this.lastMousePos = [event.clientX, event.clientY];
 
     // Calculate rotation change based on mouse movement
-    // Sensitivity factor - adjust as needed
-    const sensitivity = 0.25;
-    const rotationX = -dy * sensitivity / this.currentScale;
-    const rotationY = -dx * sensitivity / this.currentScale;
+    const sensitivity = 0.5; // Increase sensitivity for better responsiveness
+    const rotationX = -dy * sensitivity;
+    const rotationY = dx * sensitivity;
 
-    // Update rotation
+    // Update rotation (for equirectangular, this handles panning)
     this.currentRotation = [
       this.currentRotation[0] + rotationY,
       this.currentRotation[1] + rotationX,
       this.currentRotation[2]
     ];
 
-    // Apply to projection
+    // Apply rotation to projection
     if (this.projection.rotate) {
       this.projection.rotate(this.currentRotation);
-    }
-
-    // Also update center for projections that support it
-    if (this.projection.center) {
-      this.currentCenter = [
-        this.currentCenter[0] - rotationY,
-        this.currentCenter[1] - rotationX
-      ];
-      this.projection.center(this.currentCenter);
     }
 
     // Trigger re-render
@@ -233,9 +223,9 @@ export class GeoZoomService {
 
       if (!this.projection) return;
 
-      const sensitivity = 0.25;
-      const rotationX = -dy * sensitivity / this.currentScale;
-      const rotationY = -dx * sensitivity / this.currentScale;
+      const sensitivity = 0.5;
+      const rotationX = -dy * sensitivity;
+      const rotationY = dx * sensitivity;
 
       this.currentRotation = [
         this.currentRotation[0] + rotationY,
@@ -245,14 +235,6 @@ export class GeoZoomService {
 
       if (this.projection.rotate) {
         this.projection.rotate(this.currentRotation);
-      }
-
-      if (this.projection.center) {
-        this.currentCenter = [
-          this.currentCenter[0] - rotationY,
-          this.currentCenter[1] - rotationX
-        ];
-        this.projection.center(this.currentCenter);
       }
 
       this.onProjectionChange.next();
@@ -267,20 +249,15 @@ export class GeoZoomService {
   }
 
   /**
-   * Programmatically set projection center
+   * Programmatically set projection center (via rotation for equirectangular)
    */
   setCenter(center: [number, number], triggerRender = true): void {
     if (!this.projection) return;
 
-    this.currentCenter = center;
+    // For equirectangular and similar projections, use rotation
+    this.currentRotation = [-center[0], -center[1], 0];
 
-    if (this.projection.center) {
-      this.projection.center(center);
-    }
-
-    // For rotation-based panning
     if (this.projection.rotate) {
-      this.currentRotation = [-center[0], -center[1], 0];
       this.projection.rotate(this.currentRotation);
     }
 
