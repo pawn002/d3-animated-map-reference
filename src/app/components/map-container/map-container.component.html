@@ -1,0 +1,18 @@
+<div class="map-wrapper">
+  <div #mapContainer class="map-container"></div>
+
+  <div class="map-info">
+    @if (isAnimating()) {
+      <div class="animation-status">
+        <span class="status-indicator">▶</span>
+        <span>{{ currentStep() }}</span>
+      </div>
+    }
+
+    @if (currentFps() > 0) {
+      <div class="fps-counter" [class.fps-warning]="currentFps() < 23">
+        FPS: {{ currentFps() }}
+      </div>
+    }
+  </div>
+</div>
