@@ -105,11 +105,12 @@ export class GeoZoomService {
       el.setAttribute('tabindex', '0');
     }
 
-    // Mouse drag for panning
+    // Mouse drag for panning - mousedown on element
     el.addEventListener('mousedown', this.boundMouseDown);
-    el.addEventListener('mousemove', this.boundMouseMove);
-    el.addEventListener('mouseup', this.boundMouseUp);
-    el.addEventListener('mouseleave', this.boundMouseUp);
+
+    // mousemove and mouseup on document for better drag handling
+    document.addEventListener('mousemove', this.boundMouseMove);
+    document.addEventListener('mouseup', this.boundMouseUp);
 
     // Wheel for zooming
     el.addEventListener('wheel', this.boundWheel, { passive: false });
@@ -374,15 +375,16 @@ export class GeoZoomService {
   destroy(element: Element): void {
     const el = element as HTMLElement;
 
-    // Remove event listeners
+    // Remove event listeners from element
     el.removeEventListener('mousedown', this.boundMouseDown);
-    el.removeEventListener('mousemove', this.boundMouseMove);
-    el.removeEventListener('mouseup', this.boundMouseUp);
-    el.removeEventListener('mouseleave', this.boundMouseUp);
     el.removeEventListener('wheel', this.boundWheel);
     el.removeEventListener('touchstart', this.boundTouchStart);
     el.removeEventListener('touchmove', this.boundTouchMove);
     el.removeEventListener('touchend', this.boundTouchEnd);
+
+    // Remove event listeners from document
+    document.removeEventListener('mousemove', this.boundMouseMove);
+    document.removeEventListener('mouseup', this.boundMouseUp);
 
     this.onProjectionChange.complete();
   }
