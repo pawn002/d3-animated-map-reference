@@ -37,21 +37,22 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
+    "@angular-devkit/architect": "^0.2100.0",
+    "@angular-devkit/build-angular": "^21.0.0",
+    "@angular-devkit/core": "^21.0.0",
     "@angular/build": "^21.0.3",
     "@angular/cli": "^21.0.3",
     "@angular/compiler-cli": "^21.0.0",
-    "@types/d3": "^7.4.3",
-    "jsdom": "^27.1.0",
-    "typescript": "~5.9.2",
-    "vitest": "^4.0.8",
-    "storybook": "^10.1.10",
-    "@storybook/angular": "^10.1.10",
+    "@angular/platform-browser-dynamic": "^21.0.0",
+    "@compodoc/compodoc": "^1.1.32",
     "@storybook/addon-a11y": "^10.1.10",
     "@storybook/addon-docs": "^10.1.10",
-    "@angular-devkit/build-angular": "^21.0.0",
-    "@angular-devkit/architect": "^0.2100.0",
-    "@angular-devkit/core": "^21.0.0",
-    "@angular/platform-browser-dynamic": "^21.0.0",
-    "@compodoc/compodoc": "^1.1.32"
+    "@storybook/addon-mcp": "^0.1.6",
+    "@storybook/angular": "^10.1.10",
+    "@types/d3": "^7.4.3",
+    "jsdom": "^27.1.0",
+    "storybook": "^10.1.10",
+    "typescript": "~5.9.2",
+    "vitest": "^4.0.8"
   }
 }
