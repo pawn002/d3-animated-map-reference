@@ -19,7 +19,11 @@ export interface MapBounds {
 
 export interface PresetLocation {
   name: string;
-  center: [number, number];  // [longitude, latitude]
+  bounds: [[number, number], [number, number]];  // [[west, south], [east, north]]
+}
+
+export interface ProjectionParameters {
+  translate: [number, number];
   scale: number;
 }
 

@@ -1,12 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import * as d3 from 'd3';
-import { GeoProjection, geoMercator, geoPath } from 'd3-geo';
+import { GeoProjection, geoMercator, geoPath, geoBounds } from 'd3-geo';
 import { zoom, zoomIdentity, ZoomBehavior, D3ZoomEvent } from 'd3-zoom';
 import { select } from 'd3-selection';
 import { scaleOrdinal } from 'd3-scale';
 import { schemeCategory10 } from 'd3-scale-chromatic';
-import { GeoFeatureCollection, PresetLocation } from '../models/geo.types';
+import { interpolate } from 'd3-interpolate';
+import { GeoFeatureCollection, PresetLocation, ProjectionParameters } from '../models/geo.types';
 import { PerformanceService } from './performance.service';
 
 @Injectable({
@@ -21,22 +22,42 @@ export class MapService {
   private context!: CanvasRenderingContext2D;
   private canvas!: HTMLCanvasElement;
   private zoomBehavior!: ZoomBehavior<HTMLCanvasElement, unknown>;
-  private currentTransform = zoomIdentity;
   private geoData: GeoFeatureCollection | null = null;
   private colorScale = scaleOrdinal(schemeCategory10);
 
   private width = 960;
   private height = 600;
 
-  // Preset locations for animation
+  // Preset locations with geographic bounds for proper projection animation
   private presetLocations: Record<string, PresetLocation> = {
-    'world': { name: 'World', center: [0, 20], scale: 1 },
-    'north-america': { name: 'North America', center: [-100, 45], scale: 3 },
-    'europe': { name: 'Europe', center: [15, 50], scale: 4 },
-    'asia': { name: 'Asia', center: [100, 35], scale: 3 },
-    'africa': { name: 'Africa', center: [20, 0], scale: 3 },
-    'south-america': { name: 'South America', center: [-60, -15], scale: 3 },
-    'oceania': { name: 'Oceania', center: [135, -25], scale: 3 }
+    'world': {
+      name: 'World',
+      bounds: [[-180, -60], [180, 85]]
+    },
+    'north-america': {
+      name: 'North America',
+      bounds: [[-170, 15], [-50, 75]]
+    },
+    'europe': {
+      name: 'Europe',
+      bounds: [[-10, 35], [40, 70]]
+    },
+    'asia': {
+      name: 'Asia',
+      bounds: [[40, 0], [150, 60]]
+    },
+    'africa': {
+      name: 'Africa',
+      bounds: [[-20, -35], [55, 40]]
+    },
+    'south-america': {
+      name: 'South America',
+      bounds: [[-85, -56], [-30, 13]]
+    },
+    'oceania': {
+      name: 'Oceania',
+      bounds: [[110, -50], [180, 0]]
+    }
   };
 
   /**
@@ -53,7 +74,7 @@ export class MapService {
     }
     this.context = ctx;
 
-    // Setup D3 Mercator projection
+    // Setup D3 Mercator projection with initial world view
     this.projection = geoMercator()
       .scale((this.width - 3) / (2 * Math.PI))
       .translate([this.width / 2, this.height / 2]);
@@ -63,18 +84,29 @@ export class MapService {
       .projection(this.projection)
       .context(this.context);
 
-    // Setup zoom behavior
+    // Setup zoom behavior for interactive pan/zoom
     this.setupZoom();
   }
 
   /**
-   * Setup D3 zoom behavior for interactive pan/zoom
+   * Setup D3 zoom behavior - applies to projection parameters
    */
   private setupZoom(): void {
+    const initialScale = this.projection.scale();
+    const initialTranslate = this.projection.translate();
+
     this.zoomBehavior = zoom<HTMLCanvasElement, unknown>()
-      .scaleExtent([1, 8])
+      .scaleExtent([0.5, 10])
       .on('zoom', (event: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
-        this.currentTransform = event.transform;
+        const { transform } = event;
+
+        // Apply zoom transform to projection parameters
+        this.projection.scale(initialScale * transform.k);
+        this.projection.translate([
+          initialTranslate[0] + transform.x,
+          initialTranslate[1] + transform.y
+        ]);
+
         this.render();
       });
 
@@ -95,7 +127,7 @@ export class MapService {
   }
 
   /**
-   * Render the map to canvas
+   * Render the map to canvas using current projection parameters
    */
   render(): void {
     if (!this.context || !this.geoData) {
@@ -105,14 +137,7 @@ export class MapService {
     // Clear canvas
     this.context.clearRect(0, 0, this.width, this.height);
 
-    // Save context state
-    this.context.save();
-
-    // Apply zoom transform
-    this.context.translate(this.currentTransform.x, this.currentTransform.y);
-    this.context.scale(this.currentTransform.k, this.currentTransform.k);
-
-    // Draw each feature
+    // Draw each feature with current projection
     this.geoData.features.forEach((feature, index) => {
       this.context.beginPath();
       this.path(feature);
@@ -123,19 +148,56 @@ export class MapService {
 
       // Stroke outline
       this.context.strokeStyle = '#333';
-      this.context.lineWidth = 0.5 / this.currentTransform.k;
+      this.context.lineWidth = 0.5;
       this.context.stroke();
     });
-
-    // Restore context state
-    this.context.restore();
 
     // Record frame for FPS tracking
     this.performanceService.recordFrame();
   }
 
   /**
-   * Animate to a preset location
+   * Calculate projection parameters to fit geographic bounds in viewport
+   */
+  private fitBounds(bounds: [[number, number], [number, number]]): ProjectionParameters {
+    // Create a temporary projection to calculate the pixel coordinates
+    const tempProjection = geoMercator();
+
+    // Project the bounds corners
+    const [[west, south], [east, north]] = bounds;
+    const topLeft = tempProjection([west, north])!;
+    const bottomRight = tempProjection([east, south])!;
+
+    // Calculate the bounding box dimensions in projection space
+    const boundsWidth = bottomRight[0] - topLeft[0];
+    const boundsHeight = bottomRight[1] - topLeft[1];
+
+    // Add padding (10% of viewport)
+    const padding = 0.1;
+    const effectiveWidth = this.width * (1 - padding);
+    const effectiveHeight = this.height * (1 - padding);
+
+    // Calculate scale to fit bounds
+    const scale = Math.min(
+      effectiveWidth / boundsWidth,
+      effectiveHeight / boundsHeight
+    );
+
+    // Calculate center of bounds
+    const centerX = (topLeft[0] + bottomRight[0]) / 2;
+    const centerY = (topLeft[1] + bottomRight[1]) / 2;
+
+    // Calculate translate to center the bounds
+    const translate: [number, number] = [
+      this.width / 2 - centerX * scale,
+      this.height / 2 - centerY * scale
+    ];
+
+    return { scale, translate };
+  }
+
+  /**
+   * Animate to a preset location by interpolating projection parameters
    */
   animateToLocation(locationKey: string): void {
     const location = this.presetLocations[locationKey];
@@ -144,30 +206,31 @@ export class MapService {
       return;
     }
 
-    // Project the geographic center to pixel coordinates
-    const point = this.projection(location.center);
-    if (!point) {
-      console.warn('Unable to project location coordinates');
-      return;
-    }
+    // Get current projection parameters
+    const startScale = this.projection.scale();
+    const startTranslate = this.projection.translate();
 
-    // Calculate the transform needed to center this point
-    const scale = location.scale;
-    const translate: [number, number] = [
-      this.width / 2 - point[0] * scale,
-      this.height / 2 - point[1] * scale
-    ];
+    // Calculate target projection parameters to fit bounds
+    const targetParams = this.fitBounds(location.bounds);
 
-    // Create the target transform
-    const targetTransform = zoomIdentity
-      .translate(translate[0], translate[1])
-      .scale(scale);
+    // Create interpolators for scale and translate
+    const scaleInterpolator = interpolate(startScale, targetParams.scale);
+    const translateInterpolator = interpolate(startTranslate, targetParams.translate);
 
-    // Animate to the target transform
+    // Animate the projection parameters
     select(this.canvas)
       .transition()
       .duration(750)
-      .call(this.zoomBehavior.transform, targetTransform);
+      .tween('projection', () => {
+        return (t: number) => {
+          // Interpolate projection parameters
+          this.projection.scale(scaleInterpolator(t));
+          this.projection.translate(translateInterpolator(t) as [number, number]);
+
+          // Re-render with updated projection
+          this.render();
+        };
+      });
   }
 
   /**
@@ -178,19 +241,17 @@ export class MapService {
   }
 
   /**
-   * Reset zoom to initial state
+   * Reset to world view
    */
   resetZoom(): void {
-    select(this.canvas)
-      .transition()
-      .duration(750)
-      .call(this.zoomBehavior.transform, zoomIdentity);
+    this.animateToLocation('world');
   }
 
   /**
    * Get current zoom level
    */
   getCurrentZoom(): number {
-    return this.currentTransform.k;
+    const initialScale = (this.width - 3) / (2 * Math.PI);
+    return this.projection.scale() / initialScale;
   }
 }
