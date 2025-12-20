@@ -25,6 +25,10 @@ export class MapService {
   private geoData: GeoFeatureCollection | null = null;
   private colorScale = scaleOrdinal(schemeCategory10);
 
+  // Baseline projection values for zoom behavior
+  private baselineScale!: number;
+  private baselineTranslate!: [number, number];
+
   private width = 960;
   private height = 600;
 
@@ -92,19 +96,20 @@ export class MapService {
    * Setup D3 zoom behavior - applies to projection parameters
    */
   private setupZoom(): void {
-    const initialScale = this.projection.scale();
-    const initialTranslate = this.projection.translate();
+    // Initialize baseline from current projection
+    this.baselineScale = this.projection.scale();
+    this.baselineTranslate = this.projection.translate();
 
     this.zoomBehavior = zoom<HTMLCanvasElement, unknown>()
       .scaleExtent([0.5, 10])
       .on('zoom', (event: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
         const { transform } = event;
 
-        // Apply zoom transform to projection parameters
-        this.projection.scale(initialScale * transform.k);
+        // Apply zoom transform relative to CURRENT baseline
+        this.projection.scale(this.baselineScale * transform.k);
         this.projection.translate([
-          initialTranslate[0] + transform.x,
-          initialTranslate[1] + transform.y
+          this.baselineTranslate[0] + transform.x,
+          this.baselineTranslate[1] + transform.y
         ]);
 
         this.render();
@@ -230,6 +235,14 @@ export class MapService {
           // Re-render with updated projection
           this.render();
         };
+      })
+      .on('end', () => {
+        // Update baseline values after animation completes
+        this.baselineScale = this.projection.scale();
+        this.baselineTranslate = this.projection.translate();
+
+        // Reset zoom behavior transform to identity
+        select(this.canvas).call(this.zoomBehavior.transform, zoomIdentity);
       });
   }
 
