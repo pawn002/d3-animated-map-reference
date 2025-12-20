@@ -1,0 +1,104 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "North America (simplified)" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-170, 70],
+            [-170, 15],
+            [-50, 15],
+            [-50, 50],
+            [-125, 50],
+            [-125, 70],
+            [-170, 70]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "South America (simplified)" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-80, 10],
+            [-35, 10],
+            [-35, -55],
+            [-70, -55],
+            [-80, 10]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Europe (simplified)" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-10, 35],
+            [40, 35],
+            [40, 70],
+            [-10, 70],
+            [-10, 35]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Africa (simplified)" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-20, 35],
+            [50, 35],
+            [50, -35],
+            [20, -35],
+            [-20, 15],
+            [-20, 35]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Asia (simplified)" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [40, 10],
+            [150, 10],
+            [150, 70],
+            [40, 70],
+            [40, 10]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Australia (simplified)" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [110, -10],
+            [155, -10],
+            [155, -45],
+            [110, -45],
+            [110, -10]
+          ]
+        ]
+      }
+    }
+  ]
+}
