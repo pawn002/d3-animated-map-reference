@@ -132,7 +132,12 @@ export class MapRendererService {
     if (renderContext.mode === 'svg' && renderContext.svg) {
       renderContext.svg.selectAll('*').remove();
     } else if (renderContext.mode === 'canvas' && renderContext.context && renderContext.canvas) {
-      renderContext.context.clearRect(0, 0, renderContext.canvas.width, renderContext.canvas.height);
+      renderContext.context.clearRect(
+        0,
+        0,
+        renderContext.canvas.width,
+        renderContext.canvas.height
+      );
     }
   }
 

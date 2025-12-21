@@ -14,13 +14,13 @@ import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as d3 from 'd3';
 import { FeatureCollection } from 'geojson';
-import { MapRendererService, RenderContext } from '../../services/map-renderer.service';
-import { GeoZoomService } from '../../services/geo-zoom.service';
+import { MapRendererService, RenderContext } from './services/map-renderer.service';
+import { GeoZoomService } from './services/geo-zoom.service';
 import {
   AnimationControllerService,
   AnimationSequence,
-} from '../../services/animation-controller.service';
-import { RenderMode, ZoomEvent } from '../../models/map.types';
+} from './services/animation-controller.service';
+import { RenderMode, ZoomEvent } from './models/map.types';
 import sampleGeoData from './sampleData/world.json';
 
 @Component({

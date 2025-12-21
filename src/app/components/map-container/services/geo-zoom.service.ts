@@ -150,7 +150,7 @@ export class GeoZoomService {
     this.currentRotation = [
       this.currentRotation[0] + rotationY,
       this.currentRotation[1] + rotationX,
-      this.currentRotation[2]
+      this.currentRotation[2],
     ];
 
     // Apply rotation to projection
@@ -185,8 +185,10 @@ export class GeoZoomService {
     let newScale = this.currentScale * scaleFactor;
 
     // Clamp to scale extent
-    newScale = Math.max(this.scaleExtent[0] * this.initialScale,
-                       Math.min(this.scaleExtent[1] * this.initialScale, newScale));
+    newScale = Math.max(
+      this.scaleExtent[0] * this.initialScale,
+      Math.min(this.scaleExtent[1] * this.initialScale, newScale)
+    );
 
     this.currentScale = newScale;
     this.projection.scale(newScale);
@@ -230,7 +232,7 @@ export class GeoZoomService {
       this.currentRotation = [
         this.currentRotation[0] + rotationY,
         this.currentRotation[1] + rotationX,
-        this.currentRotation[2]
+        this.currentRotation[2],
       ];
 
       if (this.projection.rotate) {
@@ -305,7 +307,7 @@ export class GeoZoomService {
       // Interpolate center
       const interpCenter: [number, number] = [
         startCenter[0] + (center[0] - startCenter[0]) * eased,
-        startCenter[1] + (center[1] - startCenter[1]) * eased
+        startCenter[1] + (center[1] - startCenter[1]) * eased,
       ];
 
       // Interpolate scale
@@ -342,7 +344,7 @@ export class GeoZoomService {
     return {
       center: [...this.currentCenter] as [number, number],
       scale: this.currentScale / this.initialScale,
-      rotation: [...this.currentRotation] as [number, number, number]
+      rotation: [...this.currentRotation] as [number, number, number],
     };
   }
 

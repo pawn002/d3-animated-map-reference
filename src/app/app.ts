@@ -2,7 +2,7 @@ import { Component, signal, ViewChild, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MapContainerComponent } from './components/map-container/map-container.component';
-import { AnimationSequence } from './services/animation-controller.service';
+import { AnimationSequence } from './components/map-container/services/animation-controller.service';
 import { FeatureCollection } from 'geojson';
 // import worldData from './data/world-110m.json';
 import worldData from './data/world.json';
