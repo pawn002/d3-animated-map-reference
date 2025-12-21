@@ -21,6 +21,7 @@ import {
   AnimationSequence,
 } from '../../services/animation-controller.service';
 import { RenderMode, ZoomEvent } from '../../models/map.types';
+import sampleGeoData from './sampleData/world.json';
 
 @Component({
   selector: 'app-map-container',
@@ -35,7 +36,7 @@ export class MapContainerComponent implements AfterViewInit {
   readonly width = input(960);
   readonly height = input(600);
   readonly renderMode = input<RenderMode>('svg');
-  readonly geoData = input<FeatureCollection | undefined>(undefined);
+  readonly geoData = input<FeatureCollection>(sampleGeoData as FeatureCollection);
 
   readonly zoomChange = output<ZoomEvent>();
   readonly fpsUpdate = output<number>();
