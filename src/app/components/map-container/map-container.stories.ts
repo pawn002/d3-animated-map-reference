@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 
 // import { MapContainerComponent } from './header.component';
 import { MapContainerComponent } from './map-container.component';
-import worldData from '../../data/world-110m.json';
+import worldData from './sampleData/world.json';
 import { GeoJsonObject, FeatureCollection } from 'geojson';
 
 const meta: Meta<MapContainerComponent> = {
