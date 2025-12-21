@@ -4,7 +4,8 @@ import { RouterOutlet } from '@angular/router';
 import { MapContainerComponent } from './components/map-container/map-container.component';
 import { AnimationSequence } from './services/animation-controller.service';
 import { FeatureCollection } from 'geojson';
-import worldData from './data/world-110m.json';
+// import worldData from './data/world-110m.json';
+import worldData from './data/world.json';
 
 @Component({
   selector: 'app-root',
@@ -16,12 +17,8 @@ export class App implements OnInit {
   @ViewChild(MapContainerComponent) mapComponent?: MapContainerComponent;
 
   protected readonly title = signal('D3 Animated Map Reference');
-  protected readonly subtitle = signal(
-    'Demonstrating proper projection with smooth animations'
-  );
-  protected readonly geoData = signal<FeatureCollection>(
-    worldData as FeatureCollection
-  );
+  protected readonly subtitle = signal('Demonstrating proper projection with smooth animations');
+  protected readonly geoData = signal<FeatureCollection>(worldData as FeatureCollection);
   protected readonly currentFps = signal<number>(0);
 
   ngOnInit(): void {
