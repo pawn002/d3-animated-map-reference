@@ -126,7 +126,6 @@ map-container/
 
 - **GeoJSON data files** - Required for rendering maps
   - `sampleData/world.json` - Built-in sample data
-  - `data/world-110m.json` - Storybook sample data
   - Custom GeoJSON can be passed via the `geoData` input
 
 ## Version Requirements
@@ -135,3 +134,81 @@ map-container/
 - **RxJS**: v7+
 - **D3**: v7+
 - **TypeScript**: v5+
+
+## Integration Guide
+
+### Quick Start: Copy and Paste
+
+1. **Copy the `map-container` folder** to your Angular project:
+
+   ```bash
+   cp -r src/app/components/map-container /path/to/your/project/src/app/components/
+   ```
+
+2. **Install dependencies** (if not already present):
+
+   ```bash
+   npm install d3 geojson rxjs
+   npm install --save-dev @types/d3
+   ```
+
+3. **Update import paths** in your components:
+
+   ```typescript
+   import { MapContainerComponent } from './components/map-container/map-container.component';
+   ```
+
+4. **Use the component** in your template:
+
+   ```html
+   <app-map-container 
+     [width]="960" 
+     [height]="600"
+     [geoData]="yourGeoJsonData"
+     [renderMode]="'svg'"
+     (fpsUpdate)="onFpsChange($event)">
+   </app-map-container>
+   ```
+
+### Input Properties
+
+- `width: number` (default: 960) - Map container width in pixels
+- `height: number` (default: 600) - Map container height in pixels
+- `geoData: FeatureCollection` (default: world.json) - GeoJSON data to render
+- `renderMode: 'svg' | 'canvas'` (default: 'svg') - Rendering engine
+
+### Output Events
+
+- `fpsUpdate: EventEmitter<number>` - Emits current FPS during animations
+- `zoomChange: EventEmitter<ZoomEvent>` - Emits when zoom/pan changes
+
+### Public Methods
+
+- `renderData(data: FeatureCollection)` - Render GeoJSON data
+- `updateData(data: FeatureCollection)` - Update and re-render data
+- `playAnimation(sequence: AnimationSequence)` - Play animation sequence
+- `stopAnimation()` - Stop current animation
+- `pauseAnimation()` - Pause current animation
+- `resumeAnimation()` - Resume paused animation
+- `resetZoom()` - Reset to initial zoom level
+- `zoomTo(scale: number, duration?: number)` - Zoom to specific scale
+- `panTo(coordinates: [number, number], duration?: number)` - Pan to coordinates
+- `zoomToExtent(bounds: [[number, number], [number, number]], duration?: number)` - Fit bounds
+
+### Optional: Remove Storybook Stories
+
+If you don't use Storybook, you can safely delete `map-container.stories.ts`.
+
+### TypeScript Configuration
+
+Ensure your `tsconfig.json` includes proper module resolution:
+
+```json
+{
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  }
+}
+```
