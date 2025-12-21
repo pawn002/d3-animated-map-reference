@@ -42,3 +42,10 @@ export interface ZoomEvent {
   translate: [number, number];
   center: [number, number];
 }
+
+export interface TissotIndicatrixConfig {
+  gridSpacing: number; // degrees between sample points (default 10)
+  circleRadius: number; // radius in pixels (default 5)
+  fillOpacity: number; // opacity of circles (default 0.3)
+  strokeWidth: number; // stroke width in pixels (default 1)
+}

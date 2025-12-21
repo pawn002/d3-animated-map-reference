@@ -42,3 +42,29 @@ export const Canvas: Story = {
     renderMode: 'canvas',
   },
 };
+
+export const WithTissotIndicatrix: Story = {
+  args: {
+    width: 960,
+    height: 600,
+    geoData: worldData as FeatureCollection,
+    renderMode: 'svg',
+    showTissotIndicatrix: true,
+  },
+};
+
+export const TissotIndicatrixWithCustomConfig: Story = {
+  args: {
+    width: 960,
+    height: 600,
+    geoData: worldData as FeatureCollection,
+    renderMode: 'svg',
+    showTissotIndicatrix: true,
+    tissotConfig: {
+      gridSpacing: 15,
+      circleRadius: 6,
+      fillOpacity: 0.2,
+      strokeWidth: 2,
+    },
+  },
+};

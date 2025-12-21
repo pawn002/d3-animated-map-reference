@@ -55,7 +55,7 @@ A standalone Angular component for rendering interactive, animated geospatial ma
 
 ## File Structure
 
-```
+```text
 map-container/
 ├── map-container.component.ts        # Main component (depends on services and models)
 ├── map-container.component.html      # Template (uses Angular directives)
@@ -66,10 +66,10 @@ map-container/
 ├── services/
 │   ├── map-renderer.service.ts       # Rendering logic (uses d3, d3-geo)
 │   ├── geo-zoom.service.ts           # Zoom/pan handling (uses d3, rxjs)
-│   └── animation-controller.service.ts # Animation logic (uses d3, rxjs)
+│   ├── animation-controller.service.ts # Animation logic (uses d3, rxjs)
+│   └── tissot-indicatrix.service.ts  # Tissot's Indicatrix calculations
 └── sampleData/
     └── world.json                    # Sample GeoJSON data
-
 ```
 
 ## Dependency Summary by File
@@ -176,6 +176,8 @@ map-container/
 - `height: number` (default: 600) - Map container height in pixels
 - `geoData: FeatureCollection` (default: world.json) - GeoJSON data to render
 - `renderMode: 'svg' | 'canvas'` (default: 'svg') - Rendering engine
+- `showTissotIndicatrix: boolean` (default: false) - Show Tissot's Indicatrix overlay
+- `tissotConfig: TissotIndicatrixConfig` (optional) - Configure Tissot's Indicatrix appearance
 
 ### Output Events
 
@@ -194,6 +196,100 @@ map-container/
 - `zoomTo(scale: number, duration?: number)` - Zoom to specific scale
 - `panTo(coordinates: [number, number], duration?: number)` - Pan to coordinates
 - `zoomToExtent(bounds: [[number, number], [number, number]], duration?: number)` - Fit bounds
+
+## Tissot's Indicatrix Overlay
+
+The map component includes an optional overlay that displays **Tissot's Indicatrix of distortion**. This visualization shows how a map projection distorts distances and angles across the globe.
+
+### What is Tissot's Indicatrix?
+
+Tissot's Indicatrix is a mathematical visualization technique that reveals projection distortion by displaying small circles or ellipses at regular intervals across the map. The shape and size of each circle indicates:
+
+- **Circular shape**: No angular distortion (conformal projection)
+- **Elliptical shape**: Angular distortion present
+- **Larger size**: Local area magnification
+- **Smaller size**: Local area reduction
+- **Rotation**: Indicates shear/rotation in the projection
+
+### Using the Overlay
+
+Enable the overlay with a simple input binding:
+
+```html
+<app-map-container 
+  [showTissotIndicatrix]="true">
+</app-map-container>
+```
+
+### Configuration
+
+Customize the appearance of Tissot's Indicatrix circles:
+
+```html
+<app-map-container 
+  [showTissotIndicatrix]="true"
+  [tissotConfig]="{
+    gridSpacing: 15,        // degrees between sample points (default: 10)
+    circleRadius: 6,        // radius in pixels (default: 5)
+    fillOpacity: 0.2,       // opacity of circles (default: 0.3)
+    strokeWidth: 2          // stroke width in pixels (default: 1)
+  }">
+</app-map-container>
+```
+
+### Implementation Details
+
+The `TissotIndicatrixService` calculates distortion using the Jacobian matrix of the projection's transformation function:
+
+1. **Sampling**: Creates a regular grid of points across the world
+2. **Differentiation**: Computes the projection's partial derivatives at each point
+3. **Metric Tensor**: Analyzes the Gram matrix to determine local scaling and distortion
+4. **Rendering**: Displays ellipses whose size and shape represent the local distortion characteristics
+
+The service supports both SVG and Canvas rendering modes. Currently, the overlay is fully implemented for SVG mode; Canvas support will be added in a future version.
+
+### Example Usage in TypeScript
+
+```typescript
+import { Component } from '@angular/core';
+import { MapContainerComponent } from './components/map-container/map-container.component';
+
+@Component({
+  selector: 'app-map-viewer',
+  standalone: true,
+  imports: [MapContainerComponent],
+  template: `
+    <app-map-container 
+      [showTissotIndicatrix]="showDistortion"
+      [tissotConfig]="tissotSettings">
+    </app-map-container>
+    <button (click)="toggleDistortion()">
+      {{ showDistortion ? 'Hide' : 'Show' }} Distortion
+    </button>
+  `
+})
+export class MapViewerComponent {
+  showDistortion = false;
+  
+  tissotSettings = {
+    gridSpacing: 10,
+    circleRadius: 5,
+    fillOpacity: 0.3,
+    strokeWidth: 1
+  };
+
+  toggleDistortion() {
+    this.showDistortion = !this.showDistortion;
+  }
+}
+```
+
+### Visual Characteristics
+
+- **Color**: Red circles with darker red outlines (configurable via the service)
+- **Opacity**: Semi-transparent to show underlying map features
+- **Pointer events**: Non-interactive (won't block mouse events on the map)
+- **Rendering layer**: Rendered on top of geographic features
 
 ### Optional: Remove Storybook Stories
 

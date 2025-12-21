@@ -20,6 +20,10 @@ import {
   AnimationControllerService,
   AnimationSequence,
 } from './services/animation-controller.service';
+import {
+  TissotIndicatrixService,
+  TissotIndicatrixConfig,
+} from './services/tissot-indicatrix.service';
 import { RenderMode, ZoomEvent } from './models/map.types';
 import sampleGeoData from './sampleData/world.json';
 
@@ -37,6 +41,8 @@ export class MapContainerComponent implements AfterViewInit {
   readonly height = input(600);
   readonly renderMode = input<RenderMode>('svg');
   readonly geoData = input<FeatureCollection>(sampleGeoData as FeatureCollection);
+  readonly showTissotIndicatrix = input<boolean>(false);
+  readonly tissotConfig = input<Partial<TissotIndicatrixConfig>>({});
 
   readonly zoomChange = output<ZoomEvent>();
   readonly fpsUpdate = output<number>();
@@ -53,6 +59,7 @@ export class MapContainerComponent implements AfterViewInit {
   private mapRenderer = inject(MapRendererService);
   private geoZoom = inject(GeoZoomService);
   private animationController = inject(AnimationControllerService);
+  private tissotService = inject(TissotIndicatrixService);
   private destroyRef = inject(DestroyRef);
 
   constructor() {
@@ -68,6 +75,15 @@ export class MapContainerComponent implements AfterViewInit {
       const data = this.geoDataSignal();
       if (data && this.renderContext && this.projection) {
         this.renderData(data);
+      }
+    });
+
+    // Handle Tissot's Indicatrix visibility changes
+    effect(() => {
+      const showTissot = this.showTissotIndicatrix();
+      const config = this.tissotConfig();
+      if (this.renderContext && this.projection) {
+        this.updateTissotIndicatrix(showTissot, config);
       }
     });
   }
@@ -175,6 +191,11 @@ export class MapContainerComponent implements AfterViewInit {
 
         // Re-render data with updated projection
         this.renderData(data);
+
+        // Update Tissot's Indicatrix if visible
+        if (this.showTissotIndicatrix()) {
+          this.updateTissotIndicatrix(true, this.tissotConfig());
+        }
       }
     }
   }
@@ -185,6 +206,25 @@ export class MapContainerComponent implements AfterViewInit {
   renderData(data: FeatureCollection): void {
     if (this.renderContext) {
       this.mapRenderer.renderGeoJson(this.renderContext, data);
+    }
+  }
+
+  /**
+   * Update Tissot's Indicatrix overlay visibility and configuration
+   */
+  private updateTissotIndicatrix(show: boolean, config: Partial<TissotIndicatrixConfig>): void {
+    if (this.renderContext?.mode === 'svg' && this.renderContext.svg && this.projection) {
+      if (show) {
+        const circles = this.tissotService.generateTissotCircles(this.projection, config);
+        this.tissotService.renderTissotSvg(
+          this.renderContext.svg,
+          circles,
+          this.projection,
+          config
+        );
+      } else {
+        this.tissotService.clearTissotSvg(this.renderContext.svg);
+      }
     }
   }
 
