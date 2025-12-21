@@ -21,6 +21,8 @@ export class GeoZoomService {
   // Projection state
   private currentScale = 1;
   private currentRotation: [number, number, number] = [0, 0, 0];
+  // Target rotation used for smoothing (displayed rotation lerps toward this)
+  private targetRotation: [number, number, number] = [0, 0, 0];
   private currentCenter: [number, number] = [0, 0];
 
   // Initial state
@@ -30,6 +32,15 @@ export class GeoZoomService {
 
   // Config
   private scaleExtent: [number, number] = [0.5, 20];
+  // Pan tuning: higher alpha -> stronger reduction of pan at high zoom
+  private panScaleAlpha = 1;
+  // Smoothing configuration for lerp
+  private smoothingBase = 0.15;
+  private animationId?: number;
+  // Scale smoothing / inertia
+  private targetScale = 1;
+  private scaleVelocity = 0;
+  private scaleSmoothingBase = 0.18;
 
   // Mouse state
   private isDragging = false;
@@ -56,6 +67,7 @@ export class GeoZoomService {
     this.boundTouchStart = this.handleTouchStart.bind(this);
     this.boundTouchMove = this.handleTouchMove.bind(this);
     this.boundTouchEnd = this.handleTouchEnd.bind(this);
+    this.targetRotation = [...this.currentRotation];
   }
 
   /**
@@ -142,24 +154,23 @@ export class GeoZoomService {
     this.lastMousePos = [event.clientX, event.clientY];
 
     // Calculate rotation change based on mouse movement
-    const sensitivity = 0.5; // Increase sensitivity for better responsiveness
-    const rotationX = -dy * sensitivity;
-    const rotationY = dx * sensitivity;
+    const sensitivity = 0.5; // base sensitivity
 
-    // Update rotation (for equirectangular, this handles panning)
-    this.currentRotation = [
-      this.currentRotation[0] + rotationY,
-      this.currentRotation[1] + rotationX,
-      this.currentRotation[2],
+    // Reduce pan effect as scale increases to avoid twitchiness at high zoom
+    const relScale = this.currentScale / this.initialScale || 1;
+    const scaleFactor = Math.pow(relScale, -this.panScaleAlpha);
+
+    const rotationX = -dy * sensitivity * scaleFactor;
+    const rotationY = dx * sensitivity * scaleFactor;
+
+    // Update target rotation (we lerp the displayed rotation toward this target)
+    this.targetRotation = [
+      this.targetRotation[0] + rotationY,
+      this.targetRotation[1] + rotationX,
+      this.targetRotation[2],
     ];
 
-    // Apply rotation to projection
-    if (this.projection.rotate) {
-      this.projection.rotate(this.currentRotation);
-    }
-
-    // Trigger re-render
-    this.onProjectionChange.next();
+    this.startAnimationLoop();
   }
 
   /**
@@ -182,19 +193,18 @@ export class GeoZoomService {
     // Calculate new scale
     const delta = -event.deltaY;
     const scaleFactor = delta > 0 ? 1.1 : 0.9;
-    let newScale = this.currentScale * scaleFactor;
-
-    // Clamp to scale extent
-    newScale = Math.max(
+    // Update target scale and give a bit of velocity for inertia
+    let newTarget = this.targetScale * scaleFactor;
+    newTarget = Math.max(
       this.scaleExtent[0] * this.initialScale,
-      Math.min(this.scaleExtent[1] * this.initialScale, newScale)
+      Math.min(this.scaleExtent[1] * this.initialScale, newTarget)
     );
 
-    this.currentScale = newScale;
-    this.projection.scale(newScale);
+    // accumulate velocity to create small inertia effect
+    this.scaleVelocity += (newTarget - this.currentScale) * 0.5;
+    this.targetScale = newTarget;
 
-    // Trigger re-render
-    this.onProjectionChange.next();
+    this.startAnimationLoop();
   }
 
   /**
@@ -226,21 +236,87 @@ export class GeoZoomService {
       if (!this.projection) return;
 
       const sensitivity = 0.5;
-      const rotationX = -dy * sensitivity;
-      const rotationY = dx * sensitivity;
+      // Reduce pan effect as scale increases
+      const relScale = this.currentScale / this.initialScale || 1;
+      const scaleFactor = Math.pow(relScale, -this.panScaleAlpha);
 
-      this.currentRotation = [
-        this.currentRotation[0] + rotationY,
-        this.currentRotation[1] + rotationX,
-        this.currentRotation[2],
+      const rotationX = -dy * sensitivity * scaleFactor;
+      const rotationY = dx * sensitivity * scaleFactor;
+
+      // Update target rotation; animation loop will lerp displayed rotation
+      this.targetRotation = [
+        this.targetRotation[0] + rotationY,
+        this.targetRotation[1] + rotationX,
+        this.targetRotation[2],
       ];
+
+      this.startAnimationLoop();
+    }
+  }
+
+  /** Start the animation loop that lerps currentRotation toward targetRotation */
+  private startAnimationLoop(): void {
+    if (this.animationId) return; // already running
+    const animate = () => {
+      if (!this.projection) {
+        this.animationId = undefined;
+        return;
+      }
+
+      const relScale = this.currentScale / this.initialScale || 1;
+      const smoothing = this.smoothingBase * Math.min(relScale, 4);
+
+      let changed = false;
+      const next: [number, number, number] = [...this.currentRotation];
+      for (let i = 0; i < 3; i++) {
+        const v =
+          this.currentRotation[i] + (this.targetRotation[i] - this.currentRotation[i]) * smoothing;
+        if (Math.abs(v - this.currentRotation[i]) > 1e-4) changed = true;
+        next[i] = v;
+      }
+
+      this.currentRotation = next;
+
+      // Scale smoothing + simple inertia
+      let scaleChanged = false;
+
+      // If there's a velocity, apply it and decay
+      if (Math.abs(this.scaleVelocity) > 1e-4) {
+        this.currentScale += this.scaleVelocity;
+        this.scaleVelocity *= 0.85;
+        scaleChanged = true;
+      } else {
+        const targetDiff = this.targetScale - this.currentScale;
+        const scaleSmoothing = Math.min(this.scaleSmoothingBase * Math.max(relScale, 0.5), 0.5);
+        const newScale = this.currentScale + targetDiff * scaleSmoothing;
+        if (Math.abs(newScale - this.currentScale) > 1e-4) scaleChanged = true;
+        this.currentScale = newScale;
+      }
+
+      // Clamp scale
+      this.currentScale = Math.max(
+        this.scaleExtent[0] * this.initialScale,
+        Math.min(this.scaleExtent[1] * this.initialScale, this.currentScale)
+      );
 
       if (this.projection.rotate) {
         this.projection.rotate(this.currentRotation);
       }
 
+      if (this.projection.scale) {
+        this.projection.scale(this.currentScale);
+      }
+
       this.onProjectionChange.next();
-    }
+
+      if (changed || scaleChanged) {
+        this.animationId = requestAnimationFrame(animate);
+      } else {
+        this.animationId = undefined;
+      }
+    };
+
+    this.animationId = requestAnimationFrame(animate);
   }
 
   /**
@@ -274,10 +350,17 @@ export class GeoZoomService {
   setScale(scale: number, triggerRender = true): void {
     if (!this.projection) return;
 
-    this.currentScale = this.initialScale * scale;
-    this.projection.scale(this.currentScale);
-
+    const absolute = this.initialScale * scale;
     if (triggerRender) {
+      // smooth toward the requested scale
+      this.targetScale = absolute;
+      this.startAnimationLoop();
+    } else {
+      // immediate update (used by animateTo)
+      this.currentScale = absolute;
+      this.targetScale = absolute;
+      this.scaleVelocity = 0;
+      this.projection.scale(this.currentScale);
       this.onProjectionChange.next();
     }
   }
