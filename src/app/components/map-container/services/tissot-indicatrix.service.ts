@@ -5,7 +5,7 @@ import { Feature, Point } from 'geojson';
 
 export interface TissotIndicatrixConfig {
   gridSpacing: number; // degrees between sample points (default 10)
-  circleRadius: number; // radius in pixels (default 5)
+  circleRadius: number; // radius in meters on the Earth's surface (default 50000 m)
   fillOpacity: number; // opacity of circles (default 0.3)
   strokeWidth: number; // stroke width in pixels (default 1)
 }
@@ -30,6 +30,8 @@ interface TissotCircle {
 })
 export class TissotIndicatrixService {
   private readonly EPSILON = 1e-6; // Small value for numerical differentiation
+  private readonly EARTH_RADIUS = 6371008.8; // meters (mean Earth radius)
+  private readonly RAD2DEG = 180 / Math.PI;
 
   /**
    * Generate Tissot's Indicatrix circles for a given projection
@@ -40,7 +42,7 @@ export class TissotIndicatrixService {
   ): TissotCircle[] {
     const settings: TissotIndicatrixConfig = {
       gridSpacing: 10,
-      circleRadius: 5,
+      circleRadius: 50000,
       fillOpacity: 0.3,
       strokeWidth: 1,
       ...config,
@@ -68,7 +70,7 @@ export class TissotIndicatrixService {
     projection: GeoProjection,
     lon: number,
     lat: number,
-    radius: number
+    radiusMeters: number
   ): TissotCircle | null {
     // Project the center point
     const centerPoint = projection([lon, lat]);
@@ -115,9 +117,12 @@ export class TissotIndicatrixService {
     const lambda1 = trace / 2 + Math.sqrt(discriminant);
     const lambda2 = trace / 2 - Math.sqrt(discriminant);
 
-    // The semi-major and semi-minor axes
-    const majorAxis = Math.sqrt(lambda1) * radius;
-    const minorAxis = Math.sqrt(lambda2) * radius;
+    // Convert requested radius (meters) to angular degrees on the sphere
+    const angularDeg = (radiusMeters / this.EARTH_RADIUS) * this.RAD2DEG;
+
+    // The semi-major and semi-minor axes in screen pixels
+    const majorAxis = Math.sqrt(lambda1) * angularDeg;
+    const minorAxis = Math.sqrt(lambda2) * angularDeg;
 
     // Calculate the rotation angle of the ellipse
     let angle = 0;

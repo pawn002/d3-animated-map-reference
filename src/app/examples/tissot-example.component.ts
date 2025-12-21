@@ -39,15 +39,16 @@ import { FeatureCollection } from 'geojson';
         </label>
 
         <label>
-          Circle Radius (px):
+          Circle Radius (m):
           <input
             type="range"
-            min="3"
-            max="10"
+            min="1000"
+            max="200000"
+            step="1000"
             [value]="circleRadius()"
             (change)="updateCircleRadius($event)"
           />
-          <span>{{ circleRadius() }}px</span>
+          <span>{{ circleRadius() | number }} m</span>
         </label>
 
         <label>
@@ -200,7 +201,8 @@ export class TissotExampleComponent {
   // UI state
   showTissot = signal(true);
   gridSpacing = signal(10);
-  circleRadius = signal(5);
+  // circle radius in meters
+  circleRadius = signal(50000);
   fillOpacity = signal(0.3);
 
   // Configuration derived from signals
@@ -235,7 +237,7 @@ export class TissotExampleComponent {
   resetSettings(): void {
     this.showTissot.set(true);
     this.gridSpacing.set(10);
-    this.circleRadius.set(5);
+    this.circleRadius.set(50000);
     this.fillOpacity.set(0.3);
   }
 }

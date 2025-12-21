@@ -102,7 +102,8 @@ export class MapContainerComponent implements AfterViewInit {
 
     // Create equirectangular projection
     this.projection = d3
-      .geoEquirectangular()
+      .geoMercator()
+      // .geoEquirectangular()
       .scale(this.width() / (2 * Math.PI))
       .translate([this.width() / 2, this.height() / 2]);
 

@@ -62,7 +62,7 @@ export const TissotIndicatrixWithCustomConfig: Story = {
     showTissotIndicatrix: true,
     tissotConfig: {
       gridSpacing: 15,
-      circleRadius: 6,
+      circleRadius: 600000,
       fillOpacity: 0.2,
       strokeWidth: 2,
     },
