@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 
 // import { MapContainerComponent } from './header.component';
 import { MapContainerComponent } from './map-container.component';
-import worldData from '../../data/world.json';
+import worldData from '../../data/world-110m.json';
 import { GeoJsonObject, FeatureCollection } from 'geojson';
 
 const meta: Meta<MapContainerComponent> = {
@@ -21,13 +21,16 @@ const meta: Meta<MapContainerComponent> = {
 export default meta;
 type Story = StoryObj<MapContainerComponent>;
 
+export const Default: Story = {
+  args: {},
+};
+
 export const SVG: Story = {
   args: {
     width: 200,
     height: 200,
     geoData: worldData as FeatureCollection,
     renderMode: 'svg',
-    // renderMode: 'svg',
   },
 };
 
@@ -37,6 +40,5 @@ export const Canvas: Story = {
     height: 200,
     geoData: worldData as FeatureCollection,
     renderMode: 'canvas',
-    // renderMode: 'svg',
   },
 };
