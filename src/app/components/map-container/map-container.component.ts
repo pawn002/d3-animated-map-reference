@@ -44,7 +44,6 @@ export class MapContainerComponent implements AfterViewInit {
   readonly renderMode = input<RenderMode>('svg');
   readonly geoData = input<FeatureCollection>(sampleGeoData as FeatureCollection);
   readonly showTissot = input(false);
-  readonly tissotRadiusKm = input(1000);
   readonly tissotGeoJson = input<FeatureCollection | undefined>(undefined);
 
   readonly zoomChange = output<ZoomEvent>();
@@ -85,9 +84,7 @@ export class MapContainerComponent implements AfterViewInit {
         // the EXTERIOR (entire map except circles), creating opaque rectangles.
         // See: src/app/components/map-container/sampleData/README.md
         if (show && this.renderContext) {
-          const tgeo =
-            this.tissotGeoJson() ||
-            (this.tissotRadiusKm() === 1000 ? (sampleTissotFixed as FeatureCollection) : undefined);
+          const tgeo = this.tissotGeoJson() || (sampleTissotFixed as FeatureCollection);
           if (tgeo) {
             this.mapRenderer.renderGeoJson(this.renderContext, tgeo, {
               layer: 'tissot',
@@ -148,9 +145,7 @@ export class MapContainerComponent implements AfterViewInit {
 
       // Render tissot overlay if enabled
       if (this.showTissot()) {
-        const tgeo =
-          this.tissotGeoJson() ||
-          (this.tissotRadiusKm() === 1000 ? (sampleTissotFixed as FeatureCollection) : undefined);
+        const tgeo = this.tissotGeoJson() || (sampleTissotFixed as FeatureCollection);
         if (tgeo) {
           this.mapRenderer.renderGeoJson(this.renderContext!, tgeo, {
             layer: 'tissot',
@@ -222,9 +217,7 @@ export class MapContainerComponent implements AfterViewInit {
         // Re-render tissot overlay if enabled, clear it when disabled
         // IMPORTANT: See note above about winding order requirement for Tissot circles
         if (this.showTissot() && this.renderContext) {
-          const tgeo =
-            this.tissotGeoJson() ||
-            (this.tissotRadiusKm() === 1000 ? (sampleTissotFixed as FeatureCollection) : undefined);
+          const tgeo = this.tissotGeoJson() || (sampleTissotFixed as FeatureCollection);
           if (tgeo) {
             this.mapRenderer.renderGeoJson(this.renderContext, tgeo, {
               layer: 'tissot',

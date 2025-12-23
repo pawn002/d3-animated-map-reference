@@ -236,8 +236,7 @@ node scripts/generate-tissot.js --radius 100 --out src/app/components/map-contai
 
 - Component inputs to enable overlay:
   - `showTissot: boolean` — opt-in toggle to render the overlay.
-  - `tissotRadiusKm: number` — numeric hint used by the component; if `tissotGeoJson` is not provided and `tissotRadiusKm === 1000`, the built-in sample is used.
-  - `tissotGeoJson: FeatureCollection | undefined` — supply your own GeoJSON FeatureCollection of geographic circles if preferred.
+  - `tissotGeoJson: FeatureCollection | undefined` — supply your own GeoJSON FeatureCollection of geographic circles. If not provided, uses the built-in sample (141 circles, 1000km radius, correct winding order).
 
 - Storybook:
   - Two demo stories were added: `Tissot (SVG)` and `Tissot (Canvas)` in `map-container.stories.ts` to demonstrate the overlay in both render modes.

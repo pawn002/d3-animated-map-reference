@@ -51,7 +51,6 @@ export const TissotSVG: Story = {
     geoData: worldData as FeatureCollection,
     renderMode: 'svg',
     showTissot: true,
-    tissotRadiusKm: 1000,
   },
 };
 
@@ -74,6 +73,5 @@ export const TissotCanvas: Story = {
     geoData: worldData as FeatureCollection,
     renderMode: 'canvas',
     showTissot: true,
-    tissotRadiusKm: 1000,
   },
 };
