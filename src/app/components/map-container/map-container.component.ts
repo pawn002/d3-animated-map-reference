@@ -145,6 +145,19 @@ export class MapContainerComponent implements AfterViewInit {
     const data = this.geoData();
     if (data) {
       this.renderData(data);
+
+      // Render tissot overlay if enabled
+      if (this.showTissot()) {
+        const tgeo =
+          this.tissotGeoJson() ||
+          (this.tissotRadiusKm() === 1000 ? (sampleTissotFixed as FeatureCollection) : undefined);
+        if (tgeo) {
+          this.mapRenderer.renderGeoJson(this.renderContext!, tgeo, {
+            layer: 'tissot',
+            style: { fill: 'coral', stroke: 'none', fillOpacity: 0.25 },
+          });
+        }
+      }
     }
   }
 
