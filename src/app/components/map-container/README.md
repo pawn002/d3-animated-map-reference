@@ -212,3 +212,38 @@ Ensure your `tsconfig.json` includes proper module resolution:
   }
 }
 ```
+
+## Tissot Indicatrix Overlay (Distortion Inspector)
+
+This project includes an optional Tissot Indicatrix overlay to visually inspect projection distortion.
+
+- Files & generator:
+  - Generator script: `scripts/generate-tissot.js` (requires `@turf/turf`) — generates geojson circles of equal ground-radius on a regular lon/lat grid.
+  - Sample output: `src/app/components/map-container/sampleData/tissot_1000km_20deg.json` (1000 km radius, 20° grid)
+
+- How to generate custom Tissot GeoJSON:
+
+```bash
+# install deps (if not already installed)
+npm install
+
+# generate 1000 km circles on 20° grid (default output path shown)
+node scripts/generate-tissot.js --radius 1000 --out src/app/components/map-container/sampleData/tissot_1000km_20deg.json
+
+# generate a 100 km dataset
+node scripts/generate-tissot.js --radius 100 --out src/app/components/map-container/sampleData/tissot_100km_20deg.json
+```
+
+- Component inputs to enable overlay:
+  - `showTissot: boolean` — opt-in toggle to render the overlay.
+  - `tissotRadiusKm: number` — numeric hint used by the component; if `tissotGeoJson` is not provided and `tissotRadiusKm === 1000`, the built-in sample is used.
+  - `tissotGeoJson: FeatureCollection | undefined` — supply your own GeoJSON FeatureCollection of geographic circles if preferred.
+
+- Storybook:
+  - Two demo stories were added: `Tissot (SVG)` and `Tissot (Canvas)` in `map-container.stories.ts` to demonstrate the overlay in both render modes.
+
+- Rendering notes:
+  - The renderer supports named layers so overlays do not clobber base map rendering. For SVG, overlay paths are added with class `layer-tissot`.
+  - For Canvas, the renderer only clears the canvas when drawing the `base` layer; overlays draw on top so they persist.
+
+If you want, I can add a small UI control (toggle + radius selector) to the component template to make these settings interactive at runtime.

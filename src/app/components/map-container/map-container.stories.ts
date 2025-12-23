@@ -42,3 +42,38 @@ export const Canvas: Story = {
     renderMode: 'canvas',
   },
 };
+
+export const TissotSVG: Story = {
+  name: 'Tissot (SVG)',
+  args: {
+    width: 600,
+    height: 360,
+    geoData: worldData as FeatureCollection,
+    renderMode: 'svg',
+    showTissot: true,
+    tissotRadiusKm: 1000,
+  },
+};
+
+export const TissotCanvasTest: Story = {
+  name: 'Base Map Only (SVG) - No Tissot',
+  args: {
+    width: 600,
+    height: 360,
+    geoData: worldData as FeatureCollection,
+    renderMode: 'svg',
+    showTissot: false,
+  },
+};
+
+export const TissotCanvas: Story = {
+  name: 'Tissot (Canvas)',
+  args: {
+    width: 600,
+    height: 360,
+    geoData: worldData as FeatureCollection,
+    renderMode: 'canvas',
+    showTissot: true,
+    tissotRadiusKm: 1000,
+  },
+};

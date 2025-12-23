@@ -22,6 +22,7 @@ import {
 } from './services/animation-controller.service';
 import { RenderMode, ZoomEvent } from './models/map.types';
 import sampleGeoData from './sampleData/world.json';
+import sampleTissot1000 from './sampleData/tissot_1000km_20deg.json';
 
 @Component({
   selector: 'app-map-container',
@@ -37,6 +38,9 @@ export class MapContainerComponent implements AfterViewInit {
   readonly height = input(600);
   readonly renderMode = input<RenderMode>('svg');
   readonly geoData = input<FeatureCollection>(sampleGeoData as FeatureCollection);
+  readonly showTissot = input(false);
+  readonly tissotRadiusKm = input(1000);
+  readonly tissotGeoJson = input<FeatureCollection | undefined>(undefined);
 
   readonly zoomChange = output<ZoomEvent>();
   readonly fpsUpdate = output<number>();
@@ -66,8 +70,22 @@ export class MapContainerComponent implements AfterViewInit {
 
     effect(() => {
       const data = this.geoDataSignal();
+      const show = this.showTissot(); // Add explicit dependency on showTissot
       if (data && this.renderContext && this.projection) {
         this.renderData(data);
+
+        // Render tissot overlay when enabled
+        if (show && this.renderContext) {
+          const tgeo =
+            this.tissotGeoJson() ||
+            (this.tissotRadiusKm() === 1000 ? (sampleTissot1000 as FeatureCollection) : undefined);
+          if (tgeo) {
+            this.mapRenderer.renderGeoJson(this.renderContext, tgeo, {
+              layer: 'tissot',
+              style: { fill: 'coral', stroke: 'none', fillOpacity: 0.25 },
+            });
+          }
+        }
       }
     });
   }
@@ -175,6 +193,19 @@ export class MapContainerComponent implements AfterViewInit {
 
         // Re-render data with updated projection
         this.renderData(data);
+
+        // Re-render tissot overlay if enabled
+        if (this.showTissot() && this.renderContext) {
+          const tgeo =
+            this.tissotGeoJson() ||
+            (this.tissotRadiusKm() === 1000 ? (sampleTissot1000 as FeatureCollection) : undefined);
+          if (tgeo) {
+            this.mapRenderer.renderGeoJson(this.renderContext, tgeo, {
+              layer: 'tissot',
+              style: { fill: 'coral', stroke: 'none', fillOpacity: 0.25 },
+            });
+          }
+        }
       }
     }
   }

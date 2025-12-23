@@ -74,55 +74,111 @@ export class MapRendererService {
   /**
    * Render GeoJSON data
    */
-  renderGeoJson(renderContext: RenderContext, data: FeatureCollection): void {
+  renderGeoJson(
+    renderContext: RenderContext,
+    data: FeatureCollection,
+    options?: {
+      layer?: string;
+      style?: { fill?: string; stroke?: string; strokeWidth?: number; fillOpacity?: number };
+    }
+  ): void {
     if (renderContext.mode === 'svg' && renderContext.svg) {
-      this.renderSvg(renderContext, data);
+      this.renderSvg(renderContext, data, options);
     } else if (renderContext.mode === 'canvas' && renderContext.context) {
-      this.renderCanvas(renderContext, data);
+      this.renderCanvas(renderContext, data, options);
     }
   }
 
   /**
    * Render to SVG
    */
-  private renderSvg(renderContext: RenderContext, data: FeatureCollection): void {
+  private renderSvg(
+    renderContext: RenderContext,
+    data: FeatureCollection,
+    options?: {
+      layer?: string;
+      style?: { fill?: string; stroke?: string; strokeWidth?: number; fillOpacity?: number };
+    }
+  ): void {
     if (!renderContext.svg) return;
 
-    // Remove existing paths
-    renderContext.svg.selectAll('path').remove();
+    const layer = options?.layer || 'base';
+    const defaults = { fill: '#ccc', stroke: '#333', strokeWidth: 0.5, fillOpacity: 1 };
+    const style = Object.assign({}, defaults, options?.style || {});
 
-    // Add new paths
+    // Remove existing paths for this layer only
+    renderContext.svg.selectAll(`path.layer-${layer}`).remove();
+
+    // Add new paths for this layer - one path per feature
+    const fillOpacity = style.fillOpacity ?? defaults.fillOpacity;
     renderContext.svg
-      .selectAll('path')
-      .data(data.features)
-      .join('path')
-      .attr('d', renderContext.path)
-      .attr('class', 'geo-feature')
-      .attr('fill', '#ccc')
-      .attr('stroke', '#333')
-      .attr('stroke-width', 0.5);
+      .selectAll(`path.layer-${layer}`)
+      .data(data.features, (d: any, i: number) => i)
+      .enter()
+      .append('path')
+      .attr('d', (d: any) => renderContext.path(d))
+      .attr('class', `geo-feature layer-${layer}`)
+      .attr('fill', style.fill ?? defaults.fill)
+      .attr('fill-opacity', String(fillOpacity))
+      .attr('stroke', style.stroke ?? defaults.stroke)
+      .attr('stroke-width', String(style.strokeWidth ?? defaults.strokeWidth));
   }
 
   /**
    * Render to Canvas
    */
-  private renderCanvas(renderContext: RenderContext, data: FeatureCollection): void {
+  private renderCanvas(
+    renderContext: RenderContext,
+    data: FeatureCollection,
+    options?: {
+      layer?: string;
+      style?: { fill?: string; stroke?: string; strokeWidth?: number; fillOpacity?: number };
+    }
+  ): void {
     if (!renderContext.context || !renderContext.canvas) return;
 
     const ctx = renderContext.context;
+    const canvas = renderContext.canvas;
+    const layer = options?.layer || 'base';
+    const defaults = { fill: '#ccc', stroke: '#333', strokeWidth: 0.5, fillOpacity: 1 };
+    const style = Object.assign({}, defaults, options?.style || {});
 
-    // Clear canvas
-    ctx.clearRect(0, 0, renderContext.canvas.width, renderContext.canvas.height);
+    // Clear canvas only when drawing the base layer so overlays can be drawn on top
+    if (layer === 'base') {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
 
-    // Draw features
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 0.5;
-    ctx.fillStyle = '#ccc';
+    // Draw each feature applying style
+    ctx.save();
 
-    ctx.beginPath();
-    renderContext.path(data);
-    ctx.fill();
-    ctx.stroke();
+    // Set fill and stroke styles
+    const hasFill = typeof style.fill === 'string' && style.fill.toLowerCase() !== 'none';
+    const fillOpacity = typeof style.fillOpacity === 'number' ? style.fillOpacity : 1;
+
+    if (hasFill) {
+      ctx.fillStyle = style.fill || defaults.fill;
+      ctx.globalAlpha = fillOpacity;
+    }
+
+    ctx.strokeStyle = style.stroke || defaults.stroke;
+    ctx.lineWidth = style.strokeWidth ?? defaults.strokeWidth;
+
+    for (const feature of data.features) {
+      ctx.beginPath();
+      renderContext.path(feature as any);
+
+      // Fill if applicable
+      if (hasFill) {
+        ctx.fill();
+      }
+
+      // Stroke if not 'none'
+      if (!(typeof style.stroke === 'string' && style.stroke.toLowerCase() === 'none')) {
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
   }
 
   /**

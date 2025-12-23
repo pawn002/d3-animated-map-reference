@@ -29,9 +29,7 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.scss"
-            ]
+            "styles": ["src/styles.scss"]
           },
           "configurations": {
             "production": {
@@ -55,7 +53,7 @@
               "sourceMap": true
             }
           },
-          "defaultConfiguration": "production"
+          "defaultConfiguration": "development"
         },
         "serve": {
           "builder": "@angular/build:dev-server",
@@ -78,12 +76,7 @@
             "configDir": ".storybook",
             "browserTarget": "d3-animated-map-reference:build",
             "compodoc": true,
-            "compodocArgs": [
-              "-e",
-              "json",
-              "-d",
-              "."
-            ],
+            "compodocArgs": ["-e", "json", "-d", "."],
             "port": 6006
           }
         },
@@ -93,12 +86,7 @@
             "configDir": ".storybook",
             "browserTarget": "d3-animated-map-reference:build",
             "compodoc": true,
-            "compodocArgs": [
-              "-e",
-              "json",
-              "-d",
-              "."
-            ],
+            "compodocArgs": ["-e", "json", "-d", "."],
             "outputDir": "storybook-static"
           }
         }
