@@ -198,6 +198,20 @@ export class MapRendererService {
   }
 
   /**
+   * Clear a specific layer from the rendering context
+   */
+  clearLayer(renderContext: RenderContext, layer: string): void {
+    if (renderContext.mode === 'svg' && renderContext.svg) {
+      renderContext.svg.selectAll(`path.layer-${layer}`).remove();
+    } else if (renderContext.mode === 'canvas') {
+      // For canvas, we need to re-render all other layers
+      // This is a limitation of canvas - can't selectively remove
+      // For now, we'll just note this - full implementation would require layer tracking
+      console.warn('Canvas layer clearing not fully implemented - consider re-rendering');
+    }
+  }
+
+  /**
    * Update projection for render context
    */
   updateProjection(renderContext: RenderContext, projection: GeoProjection): void {

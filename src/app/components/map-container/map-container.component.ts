@@ -74,7 +74,7 @@ export class MapContainerComponent implements AfterViewInit {
       if (data && this.renderContext && this.projection) {
         this.renderData(data);
 
-        // Render tissot overlay when enabled
+        // Render tissot overlay when enabled, clear it when disabled
         if (show && this.renderContext) {
           const tgeo =
             this.tissotGeoJson() ||
@@ -82,9 +82,12 @@ export class MapContainerComponent implements AfterViewInit {
           if (tgeo) {
             this.mapRenderer.renderGeoJson(this.renderContext, tgeo, {
               layer: 'tissot',
-              style: { fill: 'coral', stroke: 'none', fillOpacity: 0.25 },
+              style: { fill: 'none', stroke: 'coral', strokeWidth: 1 },
             });
           }
+        } else if (this.renderContext) {
+          // Clear tissot layer when disabled
+          this.mapRenderer.clearLayer(this.renderContext, 'tissot');
         }
       }
     });
@@ -194,7 +197,7 @@ export class MapContainerComponent implements AfterViewInit {
         // Re-render data with updated projection
         this.renderData(data);
 
-        // Re-render tissot overlay if enabled
+        // Re-render tissot overlay if enabled, clear it when disabled
         if (this.showTissot() && this.renderContext) {
           const tgeo =
             this.tissotGeoJson() ||
@@ -202,9 +205,12 @@ export class MapContainerComponent implements AfterViewInit {
           if (tgeo) {
             this.mapRenderer.renderGeoJson(this.renderContext, tgeo, {
               layer: 'tissot',
-              style: { fill: 'coral', stroke: 'none', fillOpacity: 0.25 },
+              style: { fill: 'none', stroke: 'coral', strokeWidth: 1 },
             });
           }
+        } else if (this.renderContext) {
+          // Clear tissot layer when disabled
+          this.mapRenderer.clearLayer(this.renderContext, 'tissot');
         }
       }
     }
