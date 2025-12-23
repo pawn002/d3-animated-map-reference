@@ -22,6 +22,12 @@ import {
 } from './services/animation-controller.service';
 import { RenderMode, ZoomEvent } from './models/map.types';
 import sampleGeoData from './sampleData/world.json';
+import sampleTissot1000 from './sampleData/tissot_1000km_20deg.json';
+import sampleTissotFiltered from './sampleData/tissot_1000km_20deg_filtered.json';
+import sampleTissotFixed from './sampleData/tissot_1000km_20deg_fixed.json';
+import sampleTissotTest from './sampleData/tissot_test_single.json';
+import sampleTissotTest10 from './sampleData/tissot_test_10.json';
+import sampleTissotTestFirst from './sampleData/tissot_test_first.json';
 
 @Component({
   selector: 'app-map-container',
@@ -37,6 +43,8 @@ export class MapContainerComponent implements AfterViewInit {
   readonly height = input(600);
   readonly renderMode = input<RenderMode>('svg');
   readonly geoData = input<FeatureCollection>(sampleGeoData as FeatureCollection);
+  readonly showTissot = input(false);
+  readonly tissotGeoJson = input<FeatureCollection | undefined>(undefined);
 
   readonly zoomChange = output<ZoomEvent>();
   readonly fpsUpdate = output<number>();
@@ -66,8 +74,27 @@ export class MapContainerComponent implements AfterViewInit {
 
     effect(() => {
       const data = this.geoDataSignal();
+      const show = this.showTissot(); // Add explicit dependency on showTissot
       if (data && this.renderContext && this.projection) {
         this.renderData(data);
+
+        // Render tissot overlay when enabled, clear it when disabled
+        // IMPORTANT: Tissot circle polygons MUST have counter-clockwise winding order
+        // for SVG fills to render correctly. Clockwise winding causes SVG to fill
+        // the EXTERIOR (entire map except circles), creating opaque rectangles.
+        // See: src/app/components/map-container/sampleData/README.md
+        if (show && this.renderContext) {
+          const tgeo = this.tissotGeoJson() || (sampleTissotFixed as FeatureCollection);
+          if (tgeo) {
+            this.mapRenderer.renderGeoJson(this.renderContext, tgeo, {
+              layer: 'tissot',
+              style: { fill: 'coral', stroke: 'none', fillOpacity: 0.25 },
+            });
+          }
+        } else if (this.renderContext) {
+          // Clear tissot layer when disabled
+          this.mapRenderer.clearLayer(this.renderContext, 'tissot');
+        }
       }
     });
   }
@@ -115,6 +142,17 @@ export class MapContainerComponent implements AfterViewInit {
     const data = this.geoData();
     if (data) {
       this.renderData(data);
+
+      // Render tissot overlay if enabled
+      if (this.showTissot()) {
+        const tgeo = this.tissotGeoJson() || (sampleTissotFixed as FeatureCollection);
+        if (tgeo) {
+          this.mapRenderer.renderGeoJson(this.renderContext!, tgeo, {
+            layer: 'tissot',
+            style: { fill: 'coral', stroke: 'none', fillOpacity: 0.25 },
+          });
+        }
+      }
     }
   }
 
@@ -175,6 +213,21 @@ export class MapContainerComponent implements AfterViewInit {
 
         // Re-render data with updated projection
         this.renderData(data);
+
+        // Re-render tissot overlay if enabled, clear it when disabled
+        // IMPORTANT: See note above about winding order requirement for Tissot circles
+        if (this.showTissot() && this.renderContext) {
+          const tgeo = this.tissotGeoJson() || (sampleTissotFixed as FeatureCollection);
+          if (tgeo) {
+            this.mapRenderer.renderGeoJson(this.renderContext, tgeo, {
+              layer: 'tissot',
+              style: { fill: 'coral', stroke: 'none', fillOpacity: 0.25 },
+            });
+          }
+        } else if (this.renderContext) {
+          // Clear tissot layer when disabled
+          this.mapRenderer.clearLayer(this.renderContext, 'tissot');
+        }
       }
     }
   }
