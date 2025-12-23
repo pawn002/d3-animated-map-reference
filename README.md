@@ -2,9 +2,13 @@
 
 A reference implementation for creating D3 maps that combine **proper cartographic projection with smooth animations**. Built with Angular and D3.js, this project demonstrates how to achieve >23fps performance while maintaining geographic accuracy.
 
+> **New to D3 animation?** Start with our [Animation System Deep Dive](docs/ANIMATION.md) to understand how this project uses `requestAnimationFrame` instead of D3 transitions for geographic animations.
+
 ## Problem Statement
 
 Cartographers often struggle to create D3 maps featuring both proper projection and animations. This reference implementation shows how to build maps that do both effectively.
+
+**Why is this hard?** D3's transition system is designed for animating DOM attributes (positions, colors, transforms), not geographic projection state. This project solves that problem with a custom animation architecture.
 
 ## Features
 
@@ -24,6 +28,15 @@ Cartographers often struggle to create D3 maps featuring both proper projection 
 - **RxJS** - Reactive event handling
 - **colorjs.io** - Color management (ready for future use)
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Animation Deep Dive](docs/ANIMATION.md) | How `requestAnimationFrame` works and why we use it instead of D3 transitions |
+| [Architecture Overview](docs/ARCHITECTURE.md) | Service layer, data flow, and component hierarchy |
+| [Contributing Guide](docs/CONTRIBUTING.md) | Development setup, code style, and PR process |
+| [Tissot Investigation](docs/tissot-winding-order-investigation.md) | SVG polygon winding order debugging |
+
 ## Architecture
 
 The project is organized into modular components and services:
@@ -32,16 +45,18 @@ The project is organized into modular components and services:
 src/app/
 ├── components/
 │   └── map-container/          # Main map component
-├── services/
-│   ├── map-renderer.service.ts         # Rendering abstraction (SVG/Canvas)
-│   ├── geo-zoom.service.ts             # Zoom/pan logic (ported from d3-geo-zoom)
-│   └── animation-controller.service.ts # Programmatic animations
+│       └── services/
+│           ├── geo-zoom.service.ts             # RAF animation loop, projection state
+│           ├── animation-controller.service.ts # Sequence playback, FPS monitoring
+│           └── map-renderer.service.ts         # SVG/Canvas rendering abstraction
 ├── models/
 │   └── map.types.ts            # TypeScript interfaces
 └── data/
     ├── world-110m.json         # Simplified world map
     └── cities.json             # Sample city locations
 ```
+
+See [Architecture Overview](docs/ARCHITECTURE.md) for detailed documentation.
 
 ## Quick Start
 
@@ -119,13 +134,58 @@ const customSequence: AnimationSequence = {
 mapComponent.playAnimation(customSequence);
 ```
 
+## How Animation Works
+
+This project uses a **custom `requestAnimationFrame` loop** instead of D3's built-in transitions. Here's why:
+
+### The Problem with D3 Transitions for Maps
+
+```javascript
+// D3 transitions animate DOM attributes
+d3.select('circle')
+  .transition()
+  .duration(1000)
+  .attr('cx', 200);  // ✅ Works great for this
+
+// But geographic maps need projection state changes
+projection.rotate([newLon, newLat, 0]);  // ❌ D3 can't transition this
+projection.scale(newScale);
+```
+
+### Our Solution: RAF-Based Animation
+
+```javascript
+// User drags → update target
+targetRotation[0] += dx;
+
+// RAF loop → lerp current toward target
+const animate = () => {
+  currentRotation[0] += (targetRotation[0] - currentRotation[0]) * 0.15;
+  projection.rotate(currentRotation);
+  render();  // Re-draw all paths
+
+  if (needsMoreAnimation) {
+    requestAnimationFrame(animate);
+  }
+};
+```
+
+**Benefits:**
+- **Smooth interactions**: Lerp-based smoothing creates natural motion
+- **Physics-based feel**: Velocity and damping for zoom inertia
+- **Performance**: Single RAF loop, auto-stops when settled
+- **Control**: Full control over projection state interpolation
+
+See [Animation Deep Dive](docs/ANIMATION.md) for complete documentation.
+
 ## Performance
 
 The implementation achieves **>23fps** during animations through:
 
+- Custom RAF animation loop (not D3 transitions)
+- Lerp-based smoothing with auto-stop
 - Efficient D3 projection updates
 - Optimized SVG rendering (with Canvas fallback ready)
-- RequestAnimationFrame-based animation loops
 - Real-time FPS monitoring
 
 ## Extending the Project
@@ -196,7 +256,14 @@ This project is a reference implementation for educational and development purpo
 
 ## Additional Resources
 
+### Project Documentation
+- [Animation Deep Dive](docs/ANIMATION.md) - Understanding RAF-based animation
+- [Architecture Overview](docs/ARCHITECTURE.md) - Service layer and data flow
+- [Contributing Guide](docs/CONTRIBUTING.md) - Development guidelines
+
+### External Resources
 - [D3 Documentation](https://d3js.org/)
 - [D3 Geo Projections](https://github.com/d3/d3-geo)
 - [Angular Documentation](https://angular.dev/)
 - [GeoJSON Specification](https://geojson.org/)
+- [MDN: requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame)
