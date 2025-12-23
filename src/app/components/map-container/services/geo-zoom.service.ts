@@ -89,6 +89,7 @@ export class GeoZoomService {
     // Store initial projection state
     this.initialScale = projection.scale();
     this.currentScale = this.initialScale;
+    this.targetScale = this.initialScale;
 
     const center = projection.center?.();
     if (center) {
@@ -100,6 +101,7 @@ export class GeoZoomService {
     if (rotate) {
       this.initialRotation = rotate as [number, number, number];
       this.currentRotation = [...this.initialRotation];
+      this.targetRotation = [...this.initialRotation];
     }
 
     // Add event listeners
@@ -200,8 +202,9 @@ export class GeoZoomService {
       Math.min(this.scaleExtent[1] * this.initialScale, newTarget)
     );
 
-    // accumulate velocity to create small inertia effect
-    this.scaleVelocity += (newTarget - this.currentScale) * 0.5;
+    // Blend velocity instead of pure accumulation for smoother zoom
+    const velocityDelta = (newTarget - this.currentScale) * 0.2;
+    this.scaleVelocity = this.scaleVelocity * 0.5 + velocityDelta;
     this.targetScale = newTarget;
 
     this.startAnimationLoop();
@@ -277,20 +280,31 @@ export class GeoZoomService {
 
       this.currentRotation = next;
 
-      // Scale smoothing + simple inertia
+      // Scale smoothing with unified damped spring approach
       let scaleChanged = false;
 
-      // If there's a velocity, apply it and decay
-      if (Math.abs(this.scaleVelocity) > 1e-4) {
-        this.currentScale += this.scaleVelocity;
-        this.scaleVelocity *= 0.85;
-        scaleChanged = true;
-      } else {
-        const targetDiff = this.targetScale - this.currentScale;
+      // Calculate target difference
+      const targetDiff = this.targetScale - this.currentScale;
+
+      // Apply velocity with damping and target-seeking to prevent overshoot
+      if (Math.abs(this.scaleVelocity) > 1e-4 || Math.abs(targetDiff) > 1e-4) {
         const scaleSmoothing = Math.min(this.scaleSmoothingBase * Math.max(relScale, 0.5), 0.5);
-        const newScale = this.currentScale + targetDiff * scaleSmoothing;
-        if (Math.abs(newScale - this.currentScale) > 1e-4) scaleChanged = true;
-        this.currentScale = newScale;
+
+        // Apply velocity
+        this.currentScale += this.scaleVelocity;
+
+        // Also pull toward target to prevent overshoot
+        this.currentScale += targetDiff * scaleSmoothing * 0.3;
+
+        // Decay velocity more aggressively
+        this.scaleVelocity *= 0.75;
+
+        // Additional damping when close to target to prevent oscillation
+        if (Math.abs(targetDiff) < this.initialScale * 0.1) {
+          this.scaleVelocity *= 0.8;
+        }
+
+        scaleChanged = true;
       }
 
       // Clamp scale
@@ -334,6 +348,7 @@ export class GeoZoomService {
 
     // For equirectangular and similar projections, use rotation
     this.currentRotation = [-center[0], -center[1], 0];
+    this.targetRotation = [...this.currentRotation];
 
     if (this.projection.rotate) {
       this.projection.rotate(this.currentRotation);
@@ -406,6 +421,10 @@ export class GeoZoomService {
       if (t < 1) {
         requestAnimationFrame(animate);
       } else {
+        // Ensure targets are synchronized at end of animation
+        this.targetRotation = [...this.currentRotation];
+        this.targetScale = this.currentScale;
+        this.scaleVelocity = 0;
         callback?.();
       }
     };
