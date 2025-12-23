@@ -110,6 +110,10 @@ export class MapRendererService {
     renderContext.svg.selectAll(`path.layer-${layer}`).remove();
 
     // Add new paths for this layer - one path per feature
+    // NOTE: Polygon winding order (clockwise vs counter-clockwise) determines
+    // which area gets filled in SVG. Counter-clockwise fills the interior,
+    // clockwise fills the exterior. The 'fill-rule' attribute can help handle
+    // edge cases, but correct winding order in source data is preferred.
     const fillOpacity = style.fillOpacity ?? defaults.fillOpacity;
     renderContext.svg
       .selectAll(`path.layer-${layer}`)
@@ -120,6 +124,7 @@ export class MapRendererService {
       .attr('class', `geo-feature layer-${layer}`)
       .attr('fill', style.fill ?? defaults.fill)
       .attr('fill-opacity', String(fillOpacity))
+      .attr('fill-rule', 'evenodd') // Helps with complex polygons, but doesn't fix inverted winding
       .attr('stroke', style.stroke ?? defaults.stroke)
       .attr('stroke-width', String(style.strokeWidth ?? defaults.strokeWidth));
   }

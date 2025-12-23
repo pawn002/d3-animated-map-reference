@@ -23,6 +23,11 @@ import {
 import { RenderMode, ZoomEvent } from './models/map.types';
 import sampleGeoData from './sampleData/world.json';
 import sampleTissot1000 from './sampleData/tissot_1000km_20deg.json';
+import sampleTissotFiltered from './sampleData/tissot_1000km_20deg_filtered.json';
+import sampleTissotFixed from './sampleData/tissot_1000km_20deg_fixed.json';
+import sampleTissotTest from './sampleData/tissot_test_single.json';
+import sampleTissotTest10 from './sampleData/tissot_test_10.json';
+import sampleTissotTestFirst from './sampleData/tissot_test_first.json';
 
 @Component({
   selector: 'app-map-container',
@@ -75,14 +80,18 @@ export class MapContainerComponent implements AfterViewInit {
         this.renderData(data);
 
         // Render tissot overlay when enabled, clear it when disabled
+        // IMPORTANT: Tissot circle polygons MUST have counter-clockwise winding order
+        // for SVG fills to render correctly. Clockwise winding causes SVG to fill
+        // the EXTERIOR (entire map except circles), creating opaque rectangles.
+        // See: src/app/components/map-container/sampleData/README.md
         if (show && this.renderContext) {
           const tgeo =
             this.tissotGeoJson() ||
-            (this.tissotRadiusKm() === 1000 ? (sampleTissot1000 as FeatureCollection) : undefined);
+            (this.tissotRadiusKm() === 1000 ? (sampleTissotFixed as FeatureCollection) : undefined);
           if (tgeo) {
             this.mapRenderer.renderGeoJson(this.renderContext, tgeo, {
               layer: 'tissot',
-              style: { fill: 'none', stroke: 'coral', strokeWidth: 1 },
+              style: { fill: 'coral', stroke: 'none', fillOpacity: 0.25 },
             });
           }
         } else if (this.renderContext) {
@@ -198,14 +207,15 @@ export class MapContainerComponent implements AfterViewInit {
         this.renderData(data);
 
         // Re-render tissot overlay if enabled, clear it when disabled
+        // IMPORTANT: See note above about winding order requirement for Tissot circles
         if (this.showTissot() && this.renderContext) {
           const tgeo =
             this.tissotGeoJson() ||
-            (this.tissotRadiusKm() === 1000 ? (sampleTissot1000 as FeatureCollection) : undefined);
+            (this.tissotRadiusKm() === 1000 ? (sampleTissotFixed as FeatureCollection) : undefined);
           if (tgeo) {
             this.mapRenderer.renderGeoJson(this.renderContext, tgeo, {
               layer: 'tissot',
-              style: { fill: 'none', stroke: 'coral', strokeWidth: 1 },
+              style: { fill: 'coral', stroke: 'none', fillOpacity: 0.25 },
             });
           }
         } else if (this.renderContext) {

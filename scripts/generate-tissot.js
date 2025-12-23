@@ -1,4 +1,25 @@
 #!/usr/bin/env node
+/**
+ * Generate Tissot Indicatrix Circles
+ *
+ * Creates a grid of equal-radius circles for visualizing map projection distortion.
+ *
+ * IMPORTANT - Polygon Winding Order:
+ * =================================
+ * Turf.js generates circles with CLOCKWISE winding order by default, which causes
+ * SVG fills to render INVERTED (filling the entire map except the circle).
+ *
+ * If you encounter "opaque rectangle" issues when using fills:
+ * 1. The circles are likely rendering with exterior fills (inverted)
+ * 2. Fix by reversing the coordinate arrays (see fixWindingOrder function below)
+ *
+ * To verify winding order:
+ * - Render a single circle with fill (e.g., fill: 'coral', fillOpacity: 0.5)
+ * - If the MAP is filled EXCEPT the circle → winding order is inverted
+ * - If the CIRCLE is filled normally → winding order is correct
+ *
+ * See: src/app/components/map-container/sampleData/README.md for details
+ */
 const fs = require('fs');
 const path = require('path');
 const turf = require('@turf/turf');
@@ -62,6 +83,31 @@ function normalizeCoords(obj) {
 }
 
 normalizeCoords(fc);
+
+/**
+ * Fix polygon winding order for SVG fill rendering
+ *
+ * Reverses coordinate arrays to change from clockwise to counter-clockwise
+ * winding order (or vice versa). This ensures SVG fills render the INTERIOR
+ * of circles instead of the EXTERIOR.
+ *
+ * Uncomment the line below if generated circles render as inverted fills.
+ */
+function fixWindingOrder(featureCollection) {
+  return {
+    ...featureCollection,
+    features: featureCollection.features.map(feature => ({
+      ...feature,
+      geometry: {
+        ...feature.geometry,
+        coordinates: feature.geometry.coordinates.map(ring => [...ring].reverse())
+      }
+    }))
+  };
+}
+
+// Uncomment to fix winding order (if circles render with inverted fills):
+// fc = fixWindingOrder(fc);
 
 // Ensure output directory exists
 const outDir = path.dirname(outPath);
