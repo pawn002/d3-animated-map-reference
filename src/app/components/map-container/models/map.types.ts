@@ -42,3 +42,11 @@ export interface ZoomEvent {
   translate: [number, number];
   center: [number, number];
 }
+
+// Re-export projection types for convenience
+export type {
+  ProjectionType,
+  ProjectionConfig,
+  ViewportState,
+  ProjectionSelectionResult,
+} from '../services/projection-selector.service';

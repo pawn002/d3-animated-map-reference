@@ -3,6 +3,13 @@ import * as d3 from 'd3';
 import { GeoProjection } from 'd3-geo';
 import { Subject } from 'rxjs';
 import { ZoomConfig, ZoomEvent } from '../models/map.types';
+import {
+  ProjectionSelectorService,
+  ProjectionSelectionResult,
+  ViewportState,
+  ProjectionType,
+} from './projection-selector.service';
+import { ProjectionTransitionService } from './projection-transition.service';
 
 /**
  * GeoZoom Service
@@ -57,6 +64,17 @@ export class GeoZoomService {
 
   // Observable for projection changes
   public onProjectionChange = new Subject<void>();
+
+  // Observable for projection type changes (when switching between projection types)
+  public onProjectionTypeChange = new Subject<ProjectionSelectionResult>();
+
+  // Dynamic projection selection
+  private projectionSelector?: ProjectionSelectorService;
+  private projectionTransition?: ProjectionTransitionService;
+  private dynamicProjectionEnabled = false;
+  private currentProjectionType: ProjectionType = 'equirectangular';
+  private pendingProjectionChange?: ProjectionSelectionResult;
+  private isTransitioning = false;
 
   constructor() {
     // Bind event handlers once
@@ -327,10 +345,37 @@ export class GeoZoomService {
         this.animationId = requestAnimationFrame(animate);
       } else {
         this.animationId = undefined;
+
+        // When animation settles, check if projection should change
+        if (this.dynamicProjectionEnabled) {
+          this.scheduleProjectionCheck();
+        }
       }
     };
 
     this.animationId = requestAnimationFrame(animate);
+  }
+
+  /** Timeout ID for debounced projection check */
+  private projectionCheckTimeout?: ReturnType<typeof setTimeout>;
+
+  /**
+   * Schedule a debounced projection check after interaction settles
+   */
+  private scheduleProjectionCheck(): void {
+    // Clear any pending check
+    if (this.projectionCheckTimeout) {
+      clearTimeout(this.projectionCheckTimeout);
+    }
+
+    // Wait a short time after animation settles before checking
+    this.projectionCheckTimeout = setTimeout(() => {
+      const recommendation = this.checkProjectionChange();
+      if (recommendation) {
+        // Emit recommendation - component can decide whether to apply it
+        this.onProjectionTypeChange.next(recommendation);
+      }
+    }, 200);
   }
 
   /**
@@ -451,6 +496,177 @@ export class GeoZoomService {
   }
 
   /**
+   * Enable dynamic projection selection
+   */
+  enableDynamicProjection(
+    selector: ProjectionSelectorService,
+    transition: ProjectionTransitionService
+  ): void {
+    this.projectionSelector = selector;
+    this.projectionTransition = transition;
+    this.dynamicProjectionEnabled = true;
+    this.projectionTransition.setProjectionSelector(selector);
+  }
+
+  /**
+   * Disable dynamic projection selection
+   */
+  disableDynamicProjection(): void {
+    this.dynamicProjectionEnabled = false;
+  }
+
+  /**
+   * Check if dynamic projection is enabled
+   */
+  isDynamicProjectionEnabled(): boolean {
+    return this.dynamicProjectionEnabled;
+  }
+
+  /**
+   * Get current projection type
+   */
+  getCurrentProjectionType(): ProjectionType {
+    return this.currentProjectionType;
+  }
+
+  /**
+   * Set current projection type (used when projection is changed externally)
+   */
+  setCurrentProjectionType(type: ProjectionType): void {
+    this.currentProjectionType = type;
+  }
+
+  /**
+   * Get current viewport state for projection selection
+   */
+  getViewportState(): ViewportState {
+    return {
+      center: [-this.currentRotation[0], -this.currentRotation[1]],
+      scale: this.currentScale / this.initialScale,
+      width: this.width,
+      height: this.height,
+    };
+  }
+
+  /**
+   * Check and potentially trigger a projection change based on current viewport
+   * Called after zoom/pan interactions settle
+   */
+  checkProjectionChange(): ProjectionSelectionResult | null {
+    if (!this.dynamicProjectionEnabled || !this.projectionSelector || this.isTransitioning) {
+      return null;
+    }
+
+    const viewport = this.getViewportState();
+    const recommendation = this.projectionSelector.selectOptimalProjection(viewport);
+
+    if (recommendation.projectionType !== this.currentProjectionType) {
+      this.pendingProjectionChange = recommendation;
+      return recommendation;
+    }
+
+    return null;
+  }
+
+  /**
+   * Apply a pending projection change with transition
+   */
+  async applyProjectionChange(
+    newProjection: GeoProjection,
+    newType: ProjectionType,
+    duration: number = 500
+  ): Promise<void> {
+    if (!this.projection || !this.projectionTransition || this.isTransitioning) {
+      return;
+    }
+
+    this.isTransitioning = true;
+
+    try {
+      await this.projectionTransition.transition(
+        this.projection,
+        newProjection,
+        this.currentProjectionType,
+        newType,
+        duration,
+        (interpolatedProjection, progress) => {
+          // The projection is being animated - trigger renders
+          this.onProjectionChange.next();
+        }
+      );
+
+      // Update to new projection
+      this.projection = newProjection;
+      this.currentProjectionType = newType;
+
+      // Update internal state to match new projection
+      const rotate = newProjection.rotate?.();
+      if (rotate) {
+        this.currentRotation = rotate as [number, number, number];
+        this.targetRotation = [...this.currentRotation];
+      }
+      this.currentScale = newProjection.scale();
+      this.targetScale = this.currentScale;
+      this.initialScale = this.projectionSelector!.getBaseScale(newType, this.width, this.height);
+
+      // Confirm the change
+      this.projectionSelector?.confirmProjectionChange({
+        projectionType: newType,
+        projection: newProjection,
+        reason: `Switched to ${newType}`,
+      });
+
+      // Emit the type change
+      this.onProjectionTypeChange.next({
+        projectionType: newType,
+        projection: newProjection,
+        reason: `Viewport-based switch to ${newType}`,
+      });
+
+      this.pendingProjectionChange = undefined;
+    } finally {
+      this.isTransitioning = false;
+    }
+  }
+
+  /**
+   * Replace the current projection immediately (no transition)
+   */
+  replaceProjection(newProjection: GeoProjection, newType: ProjectionType): void {
+    if (!this.projection) return;
+
+    this.projection = newProjection;
+    this.currentProjectionType = newType;
+
+    // Update internal state
+    const rotate = newProjection.rotate?.();
+    if (rotate) {
+      this.currentRotation = rotate as [number, number, number];
+      this.targetRotation = [...this.currentRotation];
+    }
+    this.currentScale = newProjection.scale();
+    this.targetScale = this.currentScale;
+
+    if (this.projectionSelector) {
+      this.initialScale = this.projectionSelector.getBaseScale(newType, this.width, this.height);
+    }
+
+    this.onProjectionChange.next();
+    this.onProjectionTypeChange.next({
+      projectionType: newType,
+      projection: newProjection,
+      reason: `Replaced with ${newType}`,
+    });
+  }
+
+  /**
+   * Get the current projection instance
+   */
+  getProjection(): GeoProjection | undefined {
+    return this.projection;
+  }
+
+  /**
    * Destroy and cleanup
    */
   destroy(element: Element): void {
@@ -468,5 +684,6 @@ export class GeoZoomService {
     document.removeEventListener('mouseup', this.boundMouseUp);
 
     this.onProjectionChange.complete();
+    this.onProjectionTypeChange.complete();
   }
 }

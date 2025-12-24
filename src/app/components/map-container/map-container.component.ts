@@ -20,6 +20,12 @@ import {
   AnimationControllerService,
   AnimationSequence,
 } from './services/animation-controller.service';
+import {
+  ProjectionSelectorService,
+  ProjectionType,
+  ProjectionSelectionResult,
+} from './services/projection-selector.service';
+import { ProjectionTransitionService } from './services/projection-transition.service';
 import { RenderMode, ZoomEvent } from './models/map.types';
 import sampleGeoData from './sampleData/world.json';
 import sampleTissot1000 from './sampleData/tissot_1000km_20deg.json';
@@ -46,14 +52,31 @@ export class MapContainerComponent implements AfterViewInit {
   readonly showTissot = input(false);
   readonly tissotGeoJson = input<FeatureCollection | undefined>(undefined);
 
+  /** Enable dynamic projection selection based on viewport */
+  readonly dynamicProjection = input(false);
+
+  /** Initial projection type (default: equirectangular) */
+  readonly initialProjectionType = input<ProjectionType>('equirectangular');
+
+  /** Auto-apply projection recommendations (if false, only emits events) */
+  readonly autoApplyProjection = input(true);
+
   readonly zoomChange = output<ZoomEvent>();
   readonly fpsUpdate = output<number>();
+
+  /** Emitted when a projection change is recommended */
+  readonly projectionRecommendation = output<ProjectionSelectionResult>();
+
+  /** Emitted when the projection type actually changes */
+  readonly projectionTypeChange = output<ProjectionSelectionResult>();
 
   // Signals for reactive UI
   protected readonly currentFps = signal<number>(0);
   protected readonly isAnimating = signal<boolean>(false);
   protected readonly currentStep = signal<string>('');
   protected readonly geoDataSignal = signal<FeatureCollection | undefined>(undefined);
+  protected readonly currentProjectionType = signal<ProjectionType>('equirectangular');
+  protected readonly projectionInfo = signal<string>('');
 
   private projection?: d3.GeoProjection;
   private renderContext?: RenderContext;
@@ -61,6 +84,8 @@ export class MapContainerComponent implements AfterViewInit {
   private mapRenderer = inject(MapRendererService);
   private geoZoom = inject(GeoZoomService);
   private animationController = inject(AnimationControllerService);
+  private projectionSelector = inject(ProjectionSelectorService);
+  private projectionTransition = inject(ProjectionTransitionService);
   private destroyRef = inject(DestroyRef);
 
   constructor() {
@@ -111,11 +136,19 @@ export class MapContainerComponent implements AfterViewInit {
     const container = this.mapContainer();
     if (!container) return;
 
-    // Create equirectangular projection
-    this.projection = d3
-      .geoEquirectangular()
-      .scale(this.width() / (2 * Math.PI))
-      .translate([this.width() / 2, this.height() / 2]);
+    // Create initial projection based on input type
+    const initialType = this.initialProjectionType();
+    this.projection = this.projectionSelector.createProjection(
+      initialType,
+      this.width(),
+      this.height()
+    );
+    this.currentProjectionType.set(initialType);
+    this.geoZoom.setCurrentProjectionType(initialType);
+
+    // Update projection info
+    const config = this.projectionSelector.getProjectionConfig(initialType);
+    this.projectionInfo.set(config?.name || initialType);
 
     // Initialize renderer
     this.renderContext =
@@ -137,6 +170,11 @@ export class MapContainerComponent implements AfterViewInit {
     this.geoZoom.init(container.nativeElement, this.projection, this.width(), this.height(), {
       scaleExtent: [0.5, 20],
     });
+
+    // Enable dynamic projection selection if requested
+    if (this.dynamicProjection()) {
+      this.geoZoom.enableDynamicProjection(this.projectionSelector, this.projectionTransition);
+    }
 
     // Render initial data if available
     const data = this.geoData();
@@ -164,6 +202,13 @@ export class MapContainerComponent implements AfterViewInit {
     this.geoZoom.onProjectionChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.handleProjectionChange();
     });
+
+    // Listen to projection type change recommendations
+    this.geoZoom.onProjectionTypeChange
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((recommendation) => {
+        this.handleProjectionTypeRecommendation(recommendation);
+      });
 
     // Listen to FPS updates
     this.animationController.onFpsUpdate
@@ -233,6 +278,49 @@ export class MapContainerComponent implements AfterViewInit {
   }
 
   /**
+   * Handle projection type change recommendations from the zoom service
+   */
+  private async handleProjectionTypeRecommendation(
+    recommendation: ProjectionSelectionResult
+  ): Promise<void> {
+    // Emit the recommendation
+    this.projectionRecommendation.emit(recommendation);
+
+    // Auto-apply if enabled
+    if (this.autoApplyProjection() && this.dynamicProjection()) {
+      await this.applyProjectionChange(recommendation);
+    }
+  }
+
+  /**
+   * Apply a projection change with transition
+   */
+  private async applyProjectionChange(result: ProjectionSelectionResult): Promise<void> {
+    if (!this.projection) return;
+
+    // Update internal state
+    this.currentProjectionType.set(result.projectionType);
+
+    // Update projection info
+    const config = this.projectionSelector.getProjectionConfig(result.projectionType);
+    this.projectionInfo.set(config?.name || result.projectionType);
+
+    // Apply the change through geo zoom service (handles transition)
+    await this.geoZoom.applyProjectionChange(result.projection, result.projectionType, 500);
+
+    // Update our projection reference
+    this.projection = this.geoZoom.getProjection();
+
+    // Update render context
+    if (this.renderContext && this.projection) {
+      this.mapRenderer.updateProjection(this.renderContext, this.projection);
+    }
+
+    // Emit the change
+    this.projectionTypeChange.emit(result);
+  }
+
+  /**
    * Render GeoJSON data
    */
   renderData(data: FeatureCollection): void {
@@ -288,6 +376,67 @@ export class MapContainerComponent implements AfterViewInit {
    */
   resetZoom(): void {
     this.geoZoom.reset();
+  }
+
+  /**
+   * Get the current projection type
+   */
+  getProjectionType(): ProjectionType {
+    return this.currentProjectionType();
+  }
+
+  /**
+   * Manually set the projection type
+   */
+  async setProjectionType(type: ProjectionType, animated: boolean = true): Promise<void> {
+    if (!this.projection) return;
+
+    const result = this.projectionSelector.setProjectionType(
+      type,
+      this.width(),
+      this.height(),
+      this.geoZoom.getViewportState().center,
+      this.geoZoom.getViewportState().scale
+    );
+
+    if (animated) {
+      await this.applyProjectionChange(result);
+    } else {
+      this.geoZoom.replaceProjection(result.projection, type);
+      this.projection = result.projection;
+      this.currentProjectionType.set(type);
+
+      const config = this.projectionSelector.getProjectionConfig(type);
+      this.projectionInfo.set(config?.name || type);
+
+      if (this.renderContext) {
+        this.mapRenderer.updateProjection(this.renderContext, result.projection);
+        const data = this.geoDataSignal();
+        if (data) {
+          this.renderData(data);
+        }
+      }
+
+      this.projectionTypeChange.emit(result);
+    }
+  }
+
+  /**
+   * Get all available projection types
+   */
+  getAvailableProjections(): ProjectionType[] {
+    return this.projectionSelector.getAllProjectionConfigs().map((c) => c.type);
+  }
+
+  /**
+   * Enable or disable dynamic projection selection
+   */
+  setDynamicProjectionEnabled(enabled: boolean): void {
+    if (enabled) {
+      this.geoZoom.enableDynamicProjection(this.projectionSelector, this.projectionTransition);
+    } else {
+      this.geoZoom.disableDynamicProjection();
+    }
   }
 
   /**
