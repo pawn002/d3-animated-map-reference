@@ -35,6 +35,7 @@ Cartographers often struggle to create D3 maps featuring both proper projection 
 | [Animation Deep Dive](docs/ANIMATION.md) | How `requestAnimationFrame` works and why we use it instead of D3 transitions |
 | [Architecture Overview](docs/ARCHITECTURE.md) | Service layer, data flow, and component hierarchy |
 | [Contributing Guide](docs/CONTRIBUTING.md) | Development setup, code style, and PR process |
+| [Projection Tweening](docs/PROJECTION-TWEENING.md) | Feasibility study for animating between different map projections |
 | [Tissot Investigation](docs/tissot-winding-order-investigation.md) | SVG polygon winding order debugging |
 
 ## Architecture
