@@ -1,0 +1,79 @@
+@import '../../../../styles/mixins';
+
+.slider {
+  &__header {
+    @include flex-between;
+    margin-bottom: var(--space-2);
+  }
+
+  &__label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-text-primary);
+  }
+
+  &__value {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: var(--color-primary);
+    font-family: var(--font-family-mono);
+  }
+
+  &__input {
+    width: 100%;
+    height: 6px;
+    appearance: none;
+    background: var(--color-surface);
+    border-radius: var(--radius-full);
+    outline: none;
+    margin: var(--space-2) 0;
+
+    &::-webkit-slider-thumb {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-base);
+
+      &:hover {
+        transform: scale(1.1);
+        box-shadow: var(--shadow-md);
+      }
+    }
+
+    &::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border: none;
+      border-radius: 50%;
+      background: var(--color-primary);
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-base);
+
+      &:hover {
+        transform: scale(1.1);
+        box-shadow: var(--shadow-md);
+      }
+    }
+
+    &:focus-visible {
+      &::-webkit-slider-thumb {
+        @include focus-ring;
+      }
+      &::-moz-range-thumb {
+        @include focus-ring;
+      }
+    }
+  }
+
+  &__labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+  }
+}

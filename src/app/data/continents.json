@@ -1,0 +1,58 @@
+[
+  {
+    "id": "north-america",
+    "name": "North America",
+    "category": "continent",
+    "coordinates": [-95, 37],
+    "scale": 2.5,
+    "description": "Third largest continent by area"
+  },
+  {
+    "id": "south-america",
+    "name": "South America",
+    "category": "continent",
+    "coordinates": [-60, -15],
+    "scale": 2.5,
+    "description": "Home to the Amazon rainforest"
+  },
+  {
+    "id": "europe",
+    "name": "Europe",
+    "category": "continent",
+    "coordinates": [15, 50],
+    "scale": 3,
+    "description": "The cultural and economic heart of the West"
+  },
+  {
+    "id": "africa",
+    "name": "Africa",
+    "category": "continent",
+    "coordinates": [20, 0],
+    "scale": 2.5,
+    "description": "Second largest and most populous continent"
+  },
+  {
+    "id": "asia",
+    "name": "Asia",
+    "category": "continent",
+    "coordinates": [90, 35],
+    "scale": 2,
+    "description": "Largest and most populous continent"
+  },
+  {
+    "id": "oceania",
+    "name": "Oceania",
+    "category": "continent",
+    "coordinates": [135, -25],
+    "scale": 3.5,
+    "description": "Region including Australia and Pacific islands"
+  },
+  {
+    "id": "antarctica",
+    "name": "Antarctica",
+    "category": "continent",
+    "coordinates": [0, -85],
+    "scale": 2,
+    "description": "Southernmost continent, almost entirely south of Antarctic Circle"
+  }
+]

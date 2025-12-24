@@ -1,0 +1,40 @@
+@import '../../../../styles/mixins';
+
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0;
+  overflow-x: auto;
+
+  @include custom-scrollbar(4px);
+
+  &__tab {
+    @include button-reset;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-text-secondary);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all var(--transition-base);
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+      color: var(--color-text-primary);
+      background: var(--color-surface);
+    }
+
+    @include focus-visible;
+
+    &--active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+    }
+
+    &--disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}

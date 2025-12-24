@@ -72,6 +72,114 @@
         "type": "Point",
         "coordinates": [31.2357, 30.0444]
       }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Paris",
+        "country": "France",
+        "population": 2161000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2.3522, 48.8566]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Singapore",
+        "country": "Singapore",
+        "population": 5454000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [103.8198, 1.3521]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Dubai",
+        "country": "UAE",
+        "population": 3331000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [55.2708, 25.2048]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Moscow",
+        "country": "Russia",
+        "population": 12500000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [37.6173, 55.7558]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Mumbai",
+        "country": "India",
+        "population": 20411000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [72.8777, 19.0760]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Los Angeles",
+        "country": "USA",
+        "population": 3967000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-118.2437, 34.0522]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Toronto",
+        "country": "Canada",
+        "population": 2931000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-79.3832, 43.6532]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Cape Town",
+        "country": "South Africa",
+        "population": 4618000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [18.4241, -33.9249]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Buenos Aires",
+        "country": "Argentina",
+        "population": 15154000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-58.3816, -34.6037]
+      }
     }
   ]
 }

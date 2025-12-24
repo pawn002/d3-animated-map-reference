@@ -1,0 +1,20 @@
+{
+  "datasets": [
+    {
+      "id": "world-110m",
+      "name": "World (Low Detail)",
+      "description": "Natural Earth 110m resolution - optimized for performance",
+      "file": "world-110m.json",
+      "features": 177,
+      "recommended": "Best for animations and mobile devices"
+    },
+    {
+      "id": "world-full",
+      "name": "World (High Detail)",
+      "description": "Full resolution with more geographic features",
+      "file": "world.json",
+      "features": 250,
+      "recommended": "General use, balanced detail and performance"
+    }
+  ]
+}

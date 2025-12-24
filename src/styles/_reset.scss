@@ -1,0 +1,183 @@
+// CSS Reset & Normalization
+// Modern reset for consistent cross-browser rendering
+
+// =============================================================================
+// Box Sizing
+// =============================================================================
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+// =============================================================================
+// Root & Body
+// =============================================================================
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  min-height: 100vh;
+}
+
+// =============================================================================
+// Typography Reset
+// =============================================================================
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+  color: var(--color-text-primary);
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-base);
+
+  &:hover {
+    color: var(--color-primary-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+// =============================================================================
+// Lists
+// =============================================================================
+
+ul, ol {
+  margin: 0;
+  padding: 0;
+}
+
+li {
+  list-style: none;
+}
+
+// =============================================================================
+// Buttons & Inputs
+// =============================================================================
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  margin: 0;
+}
+
+// =============================================================================
+// Images & Media
+// =============================================================================
+
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+// =============================================================================
+// Tables
+// =============================================================================
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+// =============================================================================
+// Forms
+// =============================================================================
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+legend {
+  padding: 0;
+}
+
+// =============================================================================
+// Accessibility - Respect User Preferences
+// =============================================================================
+
+// Reduce motion for users who prefer it
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  :root {
+    --color-text-primary: #000000;
+    --color-border: #000000;
+  }
+}
+
+// =============================================================================
+// Skip to Main Content (Accessibility)
+// =============================================================================
+
+.skip-to-main {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: var(--color-primary);
+  color: white;
+  padding: var(--space-3) var(--space-4);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  z-index: var(--z-tooltip);
+
+  &:focus {
+    top: var(--space-4);
+    left: var(--space-4);
+  }
+}

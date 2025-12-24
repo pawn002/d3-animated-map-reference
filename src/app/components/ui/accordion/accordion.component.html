@@ -1,0 +1,38 @@
+<div class="accordion">
+  <button
+    class="accordion__header"
+    [attr.aria-expanded]="expanded()"
+    (click)="toggle()"
+    type="button"
+  >
+    <span class="accordion__title">
+      {{ title() }}
+      @if (count() !== undefined) {
+        <span class="accordion__count">({{ count() }})</span>
+      }
+    </span>
+    <svg
+      class="accordion__icon"
+      [class.accordion__icon--expanded]="expanded()"
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M5 7.5L10 12.5L15 7.5"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  </button>
+
+  @if (expanded()) {
+    <div class="accordion__content">
+      <ng-content />
+    </div>
+  }
+</div>

@@ -1,0 +1,156 @@
+<div class="controls-panel">
+  <h2 class="controls-panel__title">Controls</h2>
+
+  <app-tabs [tabs]="tabs" [activeTabId]="activeTab()" (tabChange)="activeTab.set($event)" />
+
+  <div class="controls-panel__content">
+    @if (activeTab() === 'locations') {
+      <div class="tab-panel">
+        <input
+          type="search"
+          class="search-input"
+          placeholder="Search locations..."
+          [(ngModel)]="searchQuery"
+        />
+
+        @for (group of locationGroups(); track group.id) {
+          <app-accordion [title]="group.name" [count]="group.presets.length">
+            <div class="location-list">
+              @for (preset of group.presets; track preset.id) {
+                <div class="location-item">
+                  <div class="location-info">
+                    <div class="location-name">{{ preset.name }}</div>
+                    <div class="location-coords">
+                      {{ preset.coordinates[1].toFixed(2) }}, {{ preset.coordinates[0].toFixed(2) }}
+                    </div>
+                  </div>
+                  <app-button
+                    [variant]="'secondary'"
+                    [size]="'sm'"
+                    (clicked)="onJumpToLocation(preset.coordinates, preset.scale)"
+                  >
+                    Jump
+                  </app-button>
+                </div>
+              }
+            </div>
+          </app-accordion>
+        }
+      </div>
+    }
+
+    @if (activeTab() === 'animate') {
+      <div class="tab-panel">
+        <section class="control-section">
+          <h3>Preset Tours</h3>
+          <div class="button-stack">
+            <app-button [fullWidth]="true" (clicked)="onPlayContinentTour()">
+              Continent Tour
+            </app-button>
+            <app-button [fullWidth]="true" (clicked)="onPlayCitiesTour()">
+              World Cities Tour
+            </app-button>
+            <app-button [variant]="'danger'" [fullWidth]="true" (clicked)="stopAnimation.emit()">
+              Stop Animation
+            </app-button>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <h3>Playback Controls</h3>
+          <app-button [variant]="'secondary'" [fullWidth]="true" (clicked)="resetView.emit()">
+            Reset View
+          </app-button>
+        </section>
+      </div>
+    }
+
+    @if (activeTab() === 'data') {
+      <div class="tab-panel">
+        <section class="control-section">
+          <h3>Active Dataset</h3>
+          @if (activeDataset(); as dataset) {
+            <div class="dataset-info">
+              <div class="dataset-name">{{ dataset.name }}</div>
+              <div class="dataset-details">{{ dataset.featureCount }} features</div>
+            </div>
+          }
+        </section>
+
+        <section class="control-section">
+          <h3>Switch Dataset</h3>
+          <div class="button-stack">
+            @for (dataset of datasets(); track dataset.id) {
+              <app-button
+                [variant]="activeDataset()?.id === dataset.id ? 'primary' : 'secondary'"
+                [fullWidth]="true"
+                (clicked)="onSwitchDataset(dataset.id)"
+              >
+                {{ dataset.name }}
+              </app-button>
+            }
+          </div>
+        </section>
+
+        <section class="control-section">
+          <h3>Upload GeoJSON</h3>
+          <app-file-upload (fileSelected)="onFileUploaded($event)" />
+        </section>
+
+        <section class="control-section">
+          <h3>Layers</h3>
+          <label class="checkbox-label">
+            <input type="checkbox" [checked]="showTissot()" (change)="onToggleTissot()" />
+            <span>Show Tissot Circles</span>
+          </label>
+        </section>
+      </div>
+    }
+
+    @if (activeTab() === 'settings') {
+      <div class="tab-panel">
+        <section class="control-section">
+          <h3>Render Mode</h3>
+          <div class="button-stack">
+            <app-button
+              [variant]="renderMode() === 'svg' ? 'primary' : 'secondary'"
+              [fullWidth]="true"
+              (clicked)="onChangeRenderMode('svg')"
+            >
+              SVG
+            </app-button>
+            <app-button
+              [variant]="renderMode() === 'canvas' ? 'primary' : 'secondary'"
+              [fullWidth]="true"
+              (clicked)="onChangeRenderMode('canvas')"
+            >
+              Canvas
+            </app-button>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <h3>Keyboard Shortcuts</h3>
+          <div class="shortcuts-list">
+            <div class="shortcut-item">
+              <kbd>R</kbd>
+              <span>Reset view</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>C</kbd>
+              <span>Continent tour</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>W</kbd>
+              <span>Cities tour</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Esc</kbd>
+              <span>Stop animation</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    }
+  </div>
+</div>

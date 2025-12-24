@@ -1,0 +1,63 @@
+@import '../../../../styles/mixins';
+
+.file-upload {
+  @include flex-column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-8);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  transition: all var(--transition-base);
+  min-height: 200px;
+
+  &--dragging {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+  }
+
+  &__icon {
+    color: var(--color-text-tertiary);
+    transition: color var(--transition-base);
+  }
+
+  &:hover &__icon {
+    color: var(--color-primary);
+  }
+
+  &__text {
+    font-size: var(--text-base);
+    color: var(--color-text-secondary);
+    text-align: center;
+  }
+
+  &__browse {
+    @include button-reset;
+    color: var(--color-primary);
+    font-weight: var(--font-medium);
+    text-decoration: underline;
+    transition: color var(--transition-base);
+
+    &:hover {
+      color: var(--color-primary-hover);
+    }
+
+    @include focus-visible;
+  }
+
+  &__hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+  }
+
+  &__error {
+    font-size: var(--text-sm);
+    color: var(--color-danger);
+    font-weight: var(--font-medium);
+    text-align: center;
+    background: var(--color-danger-light);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+  }
+}

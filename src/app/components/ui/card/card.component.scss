@@ -1,0 +1,27 @@
+@import '../../../../styles/mixins';
+
+.card {
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+
+  &--no-padding {
+    padding: 0;
+  }
+
+  &--sm {
+    box-shadow: var(--shadow-sm);
+  }
+
+  &--md {
+    box-shadow: var(--shadow-md);
+  }
+
+  &--lg {
+    box-shadow: var(--shadow-lg);
+  }
+
+  &--xl {
+    box-shadow: var(--shadow-xl);
+  }
+}

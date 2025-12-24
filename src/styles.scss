@@ -1,11 +1,73 @@
-/* You can add global styles to this file, and also import other style files */
-:root {
+// Global Styles - D3 Animated Map Demo
+// Import design system and global styles
+
+// =============================================================================
+// Design System
+// =============================================================================
+
+@import 'styles/variables';
+@import 'styles/mixins';
+@import 'styles/reset';
+@import 'styles/typography';
+
+// =============================================================================
+// Global Utilities
+// =============================================================================
+
+.container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
 }
 
-body {
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+// =============================================================================
+// Layout Utilities
+// =============================================================================
+
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-center {
+  @include flex-center;
+}
+
+.flex-between {
+  @include flex-between;
+}
+
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+.gap-6 { gap: var(--space-6); }
+
+// =============================================================================
+// Spacing Utilities
+// =============================================================================
+
+.mt-2 { margin-top: var(--space-2); }
+.mt-4 { margin-top: var(--space-4); }
+.mt-6 { margin-top: var(--space-6); }
+
+.mb-2 { margin-bottom: var(--space-2); }
+.mb-4 { margin-bottom: var(--space-4); }
+.mb-6 { margin-bottom: var(--space-6); }
+
+.p-2 { padding: var(--space-2); }
+.p-4 { padding: var(--space-4); }
+.p-6 { padding: var(--space-6); }
+
+// =============================================================================
+// Custom Scrollbar (Global)
+// =============================================================================
+
+* {
+  @include custom-scrollbar;
 }

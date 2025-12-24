@@ -1,0 +1,63 @@
+@import '../../../../styles/mixins';
+
+.accordion {
+  border-bottom: 1px solid var(--color-border-subtle);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &__header {
+    @include button-reset;
+    @include flex-between;
+    width: 100%;
+    padding: var(--space-4) 0;
+    text-align: left;
+    transition: color var(--transition-base);
+
+    &:hover {
+      color: var(--color-primary);
+    }
+
+    @include focus-visible;
+  }
+
+  &__title {
+    font-size: var(--text-base);
+    font-weight: var(--font-medium);
+    color: var(--color-text-primary);
+  }
+
+  &__count {
+    font-size: var(--text-sm);
+    font-weight: var(--font-normal);
+    color: var(--color-text-tertiary);
+    margin-left: var(--space-2);
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    transition: transform var(--transition-base);
+    color: var(--color-text-tertiary);
+
+    &--expanded {
+      transform: rotate(180deg);
+    }
+  }
+
+  &__content {
+    padding-bottom: var(--space-4);
+    animation: accordion-expand var(--transition-slow) ease-out;
+  }
+}
+
+@keyframes accordion-expand {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

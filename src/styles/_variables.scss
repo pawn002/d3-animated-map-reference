@@ -1,0 +1,131 @@
+// Design Tokens - D3 Animated Map Demo
+// Modern minimalist design system with BPCA-validated colors
+
+// =============================================================================
+// Color Palette
+// =============================================================================
+
+// Neutrals (Slate-based)
+:root {
+  --color-background: #ffffff;
+  --color-surface: #f8fafc;          // Slate 50
+  --color-surface-elevated: #ffffff;
+
+  --color-text-primary: #1e293b;     // Slate 800 - BPCA: 13.1 on white
+  --color-text-secondary: #64748b;   // Slate 500 - BPCA: 4.0 on surface
+  --color-text-tertiary: #94a3b8;    // Slate 400 - hints/labels
+
+  --color-border: #e2e8f0;           // Slate 200
+  --color-border-subtle: #f1f5f9;    // Slate 100
+
+  // Interactive Colors
+  --color-primary: #3b82f6;          // Blue 500
+  --color-primary-hover: #2563eb;    // Blue 600
+  --color-primary-light: #dbeafe;    // Blue 100 - backgrounds
+
+  --color-success: #10b981;          // Emerald 500 - good FPS
+  --color-success-light: #d1fae5;    // Emerald 100
+
+  --color-warning: #f59e0b;          // Amber 500 - moderate FPS
+  --color-warning-light: #fef3c7;    // Amber 100
+
+  --color-danger: #ef4444;           // Red 500 - errors/stop
+  --color-danger-light: #fee2e2;     // Red 100
+
+  // =============================================================================
+  // Typography
+  // =============================================================================
+
+  // Font Families
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                 'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
+
+  // Type Scale (1.125 ratio - Major Second)
+  --text-xs: 0.75rem;    // 12px - labels, captions
+  --text-sm: 0.875rem;   // 14px - secondary text
+  --text-base: 1rem;     // 16px - body
+  --text-lg: 1.125rem;   // 18px - section headers
+  --text-xl: 1.25rem;    // 20px - panel titles
+  --text-2xl: 1.5rem;    // 24px - main header
+  --text-3xl: 1.875rem;  // 30px - hero text
+
+  // Font Weights
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  // Line Heights
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  // =============================================================================
+  // Spacing
+  // =============================================================================
+
+  // 4px base unit
+  --space-1: 0.25rem;   // 4px
+  --space-2: 0.5rem;    // 8px
+  --space-3: 0.75rem;   // 12px
+  --space-4: 1rem;      // 16px
+  --space-5: 1.25rem;   // 20px
+  --space-6: 1.5rem;    // 24px
+  --space-8: 2rem;      // 32px
+  --space-10: 2.5rem;   // 40px
+  --space-12: 3rem;     // 48px
+  --space-16: 4rem;     // 64px
+
+  // =============================================================================
+  // Border Radius
+  // =============================================================================
+
+  --radius-sm: 0.25rem;  // 4px
+  --radius-md: 0.5rem;   // 8px
+  --radius-lg: 0.75rem;  // 12px
+  --radius-xl: 1rem;     // 16px
+  --radius-full: 9999px; // Fully rounded
+
+  // =============================================================================
+  // Shadows (Elevation)
+  // =============================================================================
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+
+  // =============================================================================
+  // Transitions
+  // =============================================================================
+
+  --transition-fast: 150ms ease-in-out;
+  --transition-base: 200ms ease-in-out;
+  --transition-slow: 300ms ease-in-out;
+
+  // =============================================================================
+  // Z-Index Layers
+  // =============================================================================
+
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+
+  // =============================================================================
+  // Layout
+  // =============================================================================
+
+  --panel-width: 280px;
+  --header-height: 120px;
+  --footer-height: 60px;
+
+  // Breakpoints (for media queries)
+  --breakpoint-mobile: 768px;
+  --breakpoint-tablet: 1200px;
+}

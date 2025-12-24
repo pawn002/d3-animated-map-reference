@@ -1,0 +1,19 @@
+<div class="slider">
+  <div class="slider__header">
+    <label class="slider__label">{{ label() }}</label>
+    <span class="slider__value">{{ value() }}{{ unit() }}</span>
+  </div>
+  <input
+    type="range"
+    class="slider__input"
+    [min]="min()"
+    [max]="max()"
+    [step]="step()"
+    [(ngModel)]="value"
+    [attr.aria-label]="label()"
+  />
+  <div class="slider__labels">
+    <span class="slider__min">{{ min() }}{{ unit() }}</span>
+    <span class="slider__max">{{ max() }}{{ unit() }}</span>
+  </div>
+</div>

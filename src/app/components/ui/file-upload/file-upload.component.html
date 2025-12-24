@@ -1,0 +1,49 @@
+<div
+  class="file-upload"
+  [class.file-upload--dragging]="isDragging()"
+  (drop)="onDrop($event)"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+>
+  <svg
+    class="file-upload__icon"
+    width="48"
+    height="48"
+    viewBox="0 0 48 48"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M24 32V16M24 16L18 22M24 16L30 22"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M8 32L8 36C8 38.2091 9.79086 40 12 40L36 40C38.2091 40 40 38.2091 40 36L40 32"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+    />
+  </svg>
+
+  <p class="file-upload__text">
+    Drop GeoJSON file here or
+    <button type="button" class="file-upload__browse" (click)="openFilePicker()">Browse</button>
+  </p>
+
+  <p class="file-upload__hint">Supports .json and .geojson files</p>
+
+  <input
+    #fileInput
+    type="file"
+    accept=".json,.geojson"
+    (change)="onFileSelected($event)"
+    hidden
+  />
+
+  @if (error()) {
+    <p class="file-upload__error">{{ error() }}</p>
+  }
+</div>

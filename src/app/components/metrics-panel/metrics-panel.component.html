@@ -1,0 +1,85 @@
+<div class="metrics-panel">
+  <h2 class="metrics-panel__title">Metrics</h2>
+
+  <app-card>
+    <h3>Performance</h3>
+    <div class="fps-display" [class]="fpsStatusClass()">
+      <div class="fps-value">{{ metrics().currentFps }}</div>
+      <div class="fps-label">FPS</div>
+    </div>
+
+    <div class="fps-status">
+      <span [class]="fpsStatusClass()">{{ fpsStatusText() }}</span>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric">
+        <span class="metric-label">Avg</span>
+        <span class="metric-value">{{ metrics().averageFps }}</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Frame Time</span>
+        <span class="metric-value">{{ metrics().frameTime }}ms</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Min</span>
+        <span class="metric-value">{{ metrics().minFps }}</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Max</span>
+        <span class="metric-value">{{ metrics().maxFps }}</span>
+      </div>
+    </div>
+
+    <div class="render-info">
+      <span class="render-label">Renderer:</span>
+      <span class="render-value">{{ renderMode().toUpperCase() }}</span>
+    </div>
+  </app-card>
+
+  <app-card>
+    <h3>Current View</h3>
+    <dl class="info-list">
+      <dt>Center</dt>
+      <dd>{{ formatCoordinates(viewInfo().center) }}</dd>
+
+      <dt>Scale</dt>
+      <dd>{{ viewInfo().scale.toFixed(2) }}x</dd>
+
+      <dt>Features</dt>
+      <dd>{{ featureCount() }}</dd>
+    </dl>
+  </app-card>
+
+  @if (animationStatus().isPlaying) {
+    <app-card>
+      <h3>Animation</h3>
+      <div class="animation-info">
+        <p class="animation-name">{{ animationStatus().name || 'Custom Animation' }}</p>
+        <p class="animation-step">
+          Step {{ animationStatus().currentStep }} of {{ animationStatus().totalSteps }}
+        </p>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="animationProgress()"></div>
+        </div>
+      </div>
+    </app-card>
+  }
+
+  <app-card>
+    <h3>Quick Controls</h3>
+    <div class="quick-controls">
+      <app-button [fullWidth]="true" [variant]="'primary'" (clicked)="resetView.emit()">
+        Reset View
+      </app-button>
+      <div class="zoom-controls">
+        <app-button [fullWidth]="true" [variant]="'secondary'" (clicked)="zoomIn.emit()">
+          Zoom In (+)
+        </app-button>
+        <app-button [fullWidth]="true" [variant]="'secondary'" (clicked)="zoomOut.emit()">
+          Zoom Out (-)
+        </app-button>
+      </div>
+    </div>
+  </app-card>
+</div>

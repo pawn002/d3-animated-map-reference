@@ -1,196 +1,128 @@
-.app-container {
-  flex-direction: column;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
-    sans-serif;
-  overflow: auto;
+@import '../styles/mixins';
 
-  .app-header {
-    padding: 2rem;
+.app-container {
+  min-height: 100vh;
+  @include flex-column;
+  background: var(--color-background);
+}
+
+// Header
+.app-header {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-6) 0;
+
+  .header-content {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 var(--space-6);
     text-align: center;
 
     h1 {
-      font-size: 2.5rem;
-      font-weight: 600;
+      margin: 0 0 var(--space-2) 0;
+      font-size: var(--text-3xl);
+      font-weight: var(--font-bold);
+      color: var(--color-text-primary);
     }
-
-    p {
-      font-size: 1.1rem;
-      margin-bottom: 1em;
-    }
-  }
-
-  .app-main {
-    display: flex;
-    gap: 2rem;
-
-    @media (max-width: 1200px) {
-      flex-direction: column;
-    }
-  }
-
-  .app-footer {
-    background: #333;
-    color: white;
-    padding: 1.5rem;
-    text-align: center;
 
     p {
       margin: 0;
-      font-size: 0.9rem;
-    }
-
-    a {
-      color: #667eea;
-      text-decoration: none;
-
-      &:hover {
-        text-decoration: underline;
-      }
+      font-size: var(--text-lg);
+      color: var(--color-text-secondary);
     }
   }
 }
 
-.map-section {
-  display: flex;
-  overflow: auto;
-  justify-content: center;
+// Main content - Three column layout
+.app-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: var(--panel-width) 1fr var(--panel-width);
+  gap: var(--space-6);
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-6);
+
+  @include mobile-tablet {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  @include tablet {
+    grid-template-columns: var(--panel-width) 1fr;
+
+    .right-panel {
+      grid-column: 1 / -1;
+    }
+  }
 }
 
-.controls-panel {
-  width: 320px;
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+// Panels
+.left-panel,
+.right-panel {
+  @include card;
+  padding: var(--space-6);
   height: fit-content;
+  position: sticky;
+  top: var(--space-6);
+  max-height: calc(100vh - var(--space-12));
+  overflow-y: auto;
 
-  @media (max-width: 1200px) {
-    width: 100%;
-  }
-
-  h2 {
-    margin: 0 0 1.5rem 0;
-    font-size: 1.5rem;
-    color: #333;
-  }
-
-  h3 {
-    margin: 0 0 0.75rem 0;
-    font-size: 1.1rem;
-    color: #555;
+  @include mobile-tablet {
+    position: static;
+    max-height: none;
   }
 }
 
-.control-group {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
-
-  &:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
+.left-panel {
+  @include mobile {
+    order: 2;
   }
 }
 
-.info-text {
-  font-size: 0.9rem;
-  color: #666;
-  line-height: 1.5;
-  margin: 0 0 1rem 0;
+.right-panel {
+  @include mobile {
+    order: 3;
+  }
 }
 
-.button-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+// Map section
+.map-section {
+  @include flex-center;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  min-height: 600px;
+
+  @include mobile {
+    order: 1;
+    padding: var(--space-4);
+  }
 }
 
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+// Footer
+.app-footer {
+  background: var(--color-text-primary);
+  color: white;
+  padding: var(--space-6);
   text-align: center;
+  margin-top: auto;
 
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  p {
+    margin: 0;
+    font-size: var(--text-sm);
+    max-width: 1440px;
+    margin: 0 auto;
   }
 
-  &:active {
-    transform: translateY(0);
-  }
-
-  &.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+  a {
+    color: var(--color-primary-light);
+    text-decoration: none;
 
     &:hover {
-      background: linear-gradient(135deg, #5568d3 0%, #63398a 100%);
-    }
-  }
-
-  &.btn-secondary {
-    background: #6c757d;
-    color: white;
-
-    &:hover {
-      background: #5a6268;
-    }
-  }
-
-  &.btn-danger {
-    background: #dc3545;
-    color: white;
-
-    &:hover {
-      background: #c82333;
-    }
-  }
-}
-
-.performance-indicator {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  background: #fff3cd;
-  border-left: 4px solid #ffc107;
-  border-radius: 4px;
-
-  &.fps-good {
-    background: #d4edda;
-    border-left-color: #28a745;
-  }
-
-  .fps-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #333;
-  }
-
-  .fps-status {
-    font-size: 0.85rem;
-    color: #666;
-  }
-}
-
-.tech-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-
-  li {
-    padding: 0.5rem 0;
-    font-size: 0.9rem;
-    color: #666;
-
-    strong {
-      color: #333;
+      text-decoration: underline;
     }
   }
 }

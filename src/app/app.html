@@ -1,78 +1,63 @@
+<a href="#main-content" class="skip-to-main">Skip to main content</a>
+
 <div class="app-container">
   <header class="app-header">
-    <h1>{{ title() }}</h1>
-
-    <p>{{ subtitle() }}</p>
-
-    <hr />
+    <div class="header-content">
+      <h1>{{ title() }}</h1>
+      <p>{{ subtitle() }}</p>
+    </div>
   </header>
 
-  <main class="app-main">
-    <div class="map-section">
-      <app-map-container
-        [width]="566"
-        [height]="320"
-        [renderMode]="'svg'"
-        [geoData]="geoData()"
-        (fpsUpdate)="handleFpsUpdate($event)"
-        [showTissot]="true"
+  <main id="main-content" class="app-main">
+    <aside class="left-panel">
+      <app-controls-panel
+        [renderMode]="renderMode()"
+        [showTissot]="showTissot()"
+        (jumpToLocation)="handleJumpToLocation($event)"
+        (playAnimation)="handlePlayAnimation($event)"
+        (stopAnimation)="handleStopAnimation()"
+        (resetView)="handleResetView()"
+        (uploadDataset)="handleUploadDataset($event)"
+        (switchDataset)="handleSwitchDataset($event)"
+        (toggleTissot)="handleToggleTissot($event)"
+        (changeRenderMode)="handleChangeRenderMode($event)"
       />
+    </aside>
+
+    <div class="map-section">
+      @if (geoData(); as data) {
+        <app-map-container
+          [width]="mapWidth()"
+          [height]="mapHeight()"
+          [renderMode]="renderMode()"
+          [geoData]="data"
+          [showTissot]="showTissot()"
+          (fpsUpdate)="handleFpsUpdate($event)"
+          (zoomChange)="handleZoomChange($event)"
+        />
+      }
     </div>
 
-    <aside class="controls-panel">
-      <h2>Interactive Controls</h2>
-
-      <section class="control-group">
-        <h3>User Interactions</h3>
-        <p class="info-text">
-          • <strong>Click and drag</strong> to pan<br />
-          • <strong>Scroll</strong> to zoom in/out
-        </p>
-        <button (click)="resetMap()" class="btn btn-secondary">Reset View</button>
-      </section>
-
-      <section class="control-group">
-        <h3>Programmatic Animations</h3>
-        <p class="info-text">Pre-defined animation sequences demonstrating smooth transitions</p>
-        <div class="button-group">
-          <button (click)="playContinentTour()" class="btn btn-primary">Continent Tour</button>
-          <button (click)="playWorldTour()" class="btn btn-primary">World Cities</button>
-          <button (click)="stopAnimation()" class="btn btn-danger">Stop</button>
-        </div>
-      </section>
-
-      <section class="control-group">
-        <h3>Performance</h3>
-        @if (currentFps() > 0) {
-        <div class="performance-indicator" [class.fps-good]="currentFps() >= 23">
-          <span class="fps-value">{{ currentFps() }} FPS</span>
-          <span class="fps-status">
-            {{ currentFps() >= 23 ? '✓ Target Met (>23fps)' : '⚠ Below Target' }}
-          </span>
-        </div>
-        } @else {
-        <p class="info-text">Start an animation to monitor FPS</p>
-        }
-      </section>
-
-      <section class="control-group">
-        <h3>Technical Details</h3>
-        <ul class="tech-list">
-          <li><strong>Projection:</strong> Equirectangular (flat)</li>
-          <li><strong>Renderer:</strong> SVG (Canvas-ready)</li>
-          <li><strong>Data Format:</strong> GeoJSON</li>
-          <li><strong>Framework:</strong> Angular + D3</li>
-        </ul>
-      </section>
+    <aside class="right-panel">
+      <app-metrics-panel
+        [metrics]="performanceMetrics()"
+        [viewInfo]="viewInfo()"
+        [animationStatus]="animationStatus()"
+        [renderMode]="renderMode()"
+        [featureCount]="featureCount"
+        (resetView)="handleResetView()"
+        (zoomIn)="handleZoomIn()"
+        (zoomOut)="handleZoomOut()"
+      />
     </aside>
   </main>
 
   <footer class="app-footer">
     <p>
-      Reference implementation for D3 animated maps with proper projection • Inspired by
-      <a href="https://github.com/vasturiano/d3-geo-zoom" target="_blank" rel="noopener"
-        >d3-geo-zoom</a
-      >
+      Modern D3.js animated map demo with Angular •
+      <a href="https://github.com/anthropics/claude-code" target="_blank" rel="noopener">
+        Built with Claude Code
+      </a>
     </p>
   </footer>
 </div>
