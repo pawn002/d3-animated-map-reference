@@ -1,0 +1,194 @@
+<div class="benchmark-container">
+  <header class="benchmark-header">
+    <h1>Raster Reprojection Performance Benchmark</h1>
+    <p class="subtitle">
+      Measuring CPU cost of reprojecting Web Mercator tiles to Equirectangular projection
+    </p>
+  </header>
+
+  <div class="benchmark-layout">
+    <!-- Controls Panel -->
+    <aside class="controls-panel">
+      <section class="control-group">
+        <h3>Viewport Size</h3>
+        <div class="button-group">
+          @for (config of viewportConfigs; track config.name) {
+            <button
+              [class.active]="selectedViewport().name === config.name"
+              [disabled]="isRunning()"
+              (click)="selectViewport(config)"
+            >
+              {{ config.name }}
+              <span class="pixel-count">{{ formatPixels(config.width * config.height) }} px</span>
+            </button>
+          }
+        </div>
+      </section>
+
+      <section class="control-group">
+        <h3>Reprojection Method</h3>
+        <div class="button-group">
+          @for (bench of benchmarkTypes; track bench.type) {
+            <button
+              [class.active]="selectedBenchmark() === bench.type"
+              [disabled]="isRunning()"
+              (click)="selectBenchmarkType(bench.type)"
+            >
+              {{ bench.name }}
+            </button>
+          }
+        </div>
+      </section>
+
+      <section class="control-group">
+        <h3>Run Benchmark</h3>
+        <div class="action-buttons">
+          <button class="primary" [disabled]="isRunning()" (click)="runStaticBenchmark()">
+            Run Static Test (2s)
+          </button>
+          <button class="primary" [disabled]="isRunning()" (click)="runAnimatedBenchmark()">
+            Run Animated Test (5s)
+          </button>
+          <button [disabled]="!isRunning()" (click)="stopBenchmark()">
+            Stop
+          </button>
+          <button [disabled]="isRunning() || results().length === 0" (click)="clearResults()">
+            Clear Results
+          </button>
+        </div>
+      </section>
+
+      <!-- Live Metrics -->
+      <section class="live-metrics" [class.active]="isRunning()">
+        <h3>Live Metrics</h3>
+        <div class="metric">
+          <span class="label">FPS:</span>
+          <span class="value" [class]="getFpsClass(currentFps())">{{ currentFps() }}</span>
+        </div>
+        <div class="metric">
+          <span class="label">Frame Time:</span>
+          <span class="value">{{ currentFrameTime() }} ms</span>
+        </div>
+        <div class="metric">
+          <span class="label">Reprojection:</span>
+          <span class="value">{{ currentReprojectionTime() }} ms</span>
+        </div>
+        <div class="metric">
+          <span class="label">Frames:</span>
+          <span class="value">{{ frameCount() }}</span>
+        </div>
+      </section>
+
+      <!-- Target Info -->
+      <section class="target-info">
+        <h3>Performance Target</h3>
+        <p>Minimum FPS: <strong>23 fps</strong> (from feasibility study)</p>
+        <p>Frame budget: <strong>43.5 ms</strong></p>
+      </section>
+    </aside>
+
+    <!-- Canvas Display -->
+    <main class="canvas-area">
+      <div class="canvas-wrapper">
+        <canvas #benchmarkCanvas></canvas>
+        @if (isAnimating()) {
+          <div class="animating-indicator">Animating...</div>
+        }
+      </div>
+
+      <!-- Current Result -->
+      @if (currentResult(); as result) {
+        <div class="current-result" [class.pass]="result.passesTarget" [class.fail]="!result.passesTarget">
+          <h3>Latest Result: {{ result.testName }}</h3>
+          <div class="result-grid">
+            <div class="result-item">
+              <span class="label">Viewport</span>
+              <span class="value">{{ result.viewportSize.width }}x{{ result.viewportSize.height }}</span>
+            </div>
+            <div class="result-item">
+              <span class="label">Pixels</span>
+              <span class="value">{{ formatPixels(result.totalPixels) }}</span>
+            </div>
+            <div class="result-item highlight">
+              <span class="label">Avg FPS</span>
+              <span class="value" [class]="getFpsClass(result.avgFps)">{{ result.avgFps }}</span>
+            </div>
+            <div class="result-item">
+              <span class="label">Min/Max FPS</span>
+              <span class="value">{{ result.minFps }} / {{ result.maxFps }}</span>
+            </div>
+            <div class="result-item">
+              <span class="label">Avg Frame</span>
+              <span class="value">{{ result.avgFrameTime }} ms</span>
+            </div>
+            <div class="result-item">
+              <span class="label">Avg Reproj</span>
+              <span class="value">{{ result.avgReprojectionTime }} ms</span>
+            </div>
+            <div class="result-item status">
+              <span class="label">Target (23fps)</span>
+              <span class="value" [class.pass]="result.passesTarget" [class.fail]="!result.passesTarget">
+                {{ result.passesTarget ? 'PASS' : 'FAIL' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      }
+    </main>
+  </div>
+
+  <!-- Results History -->
+  @if (results().length > 0) {
+    <section class="results-history">
+      <h2>Benchmark Results</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Test</th>
+            <th>Viewport</th>
+            <th>Pixels</th>
+            <th>Avg FPS</th>
+            <th>Min FPS</th>
+            <th>Avg Reproj (ms)</th>
+            <th>Frames</th>
+            <th>Target</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (result of results(); track result.testName + result.duration) {
+            <tr [class.pass]="result.passesTarget" [class.fail]="!result.passesTarget">
+              <td>{{ result.testName }}</td>
+              <td>{{ result.viewportSize.width }}x{{ result.viewportSize.height }}</td>
+              <td>{{ formatPixels(result.totalPixels) }}</td>
+              <td [class]="getFpsClass(result.avgFps)">{{ result.avgFps }}</td>
+              <td [class]="getFpsClass(result.minFps)">{{ result.minFps }}</td>
+              <td>{{ result.avgReprojectionTime }}</td>
+              <td>{{ result.frameCount }}</td>
+              <td>
+                <span [class.pass]="result.passesTarget" [class.fail]="!result.passesTarget">
+                  {{ result.passesTarget ? 'PASS' : 'FAIL' }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+
+  <!-- Methodology -->
+  <section class="methodology">
+    <h2>Methodology</h2>
+    <ul>
+      <li><strong>Baseline:</strong> Simple pixel copy without reprojection (establishes rendering overhead)</li>
+      <li><strong>Nearest Neighbor:</strong> Fast reprojection using nearest pixel sampling</li>
+      <li><strong>Bilinear:</strong> Higher quality reprojection with interpolation (slower)</li>
+      <li><strong>Static Test:</strong> Fixed viewport, measures raw reprojection speed</li>
+      <li><strong>Animated Test:</strong> Oscillating zoom, simulates real-world pan/zoom interaction</li>
+    </ul>
+    <p class="note">
+      Results validate the feasibility study's concern: pixel-by-pixel reprojection is CPU-intensive
+      and may struggle to maintain 23fps at higher resolutions.
+    </p>
+  </section>
+</div>

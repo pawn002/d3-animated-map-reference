@@ -1,0 +1,406 @@
+.benchmark-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px;
+  color: #333;
+}
+
+.benchmark-header {
+  text-align: center;
+  margin-bottom: 30px;
+
+  h1 {
+    margin: 0 0 10px;
+    font-size: 1.8rem;
+    color: #1a1a2e;
+  }
+
+  .subtitle {
+    color: #666;
+    margin: 0;
+  }
+}
+
+.benchmark-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+  margin-bottom: 30px;
+}
+
+// Controls Panel
+.controls-panel {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.control-group {
+  h3 {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #555;
+  }
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  button {
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    &:hover:not(:disabled) {
+      border-color: #4a90d9;
+      background: #f0f7ff;
+    }
+
+    &.active {
+      border-color: #4a90d9;
+      background: #e3f0ff;
+      font-weight: 500;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pixel-count {
+      font-size: 0.8rem;
+      color: #888;
+    }
+  }
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  button {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.15s ease;
+
+    &.primary {
+      background: #4a90d9;
+      color: white;
+
+      &:hover:not(:disabled) {
+        background: #3a7bc8;
+      }
+    }
+
+    &:not(.primary) {
+      background: #e0e0e0;
+      color: #333;
+
+      &:hover:not(:disabled) {
+        background: #d0d0d0;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Live Metrics
+.live-metrics {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 16px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+
+  &.active {
+    opacity: 1;
+    border-color: #4a90d9;
+  }
+
+  h3 {
+    margin: 0 0 12px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #555;
+  }
+
+  .metric {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 0.95rem;
+
+    .label {
+      color: #666;
+    }
+
+    .value {
+      font-weight: 600;
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+  }
+}
+
+.target-info {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 0.9rem;
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 0.85rem;
+    color: #92400e;
+  }
+
+  p {
+    margin: 4px 0;
+    color: #78350f;
+  }
+}
+
+// Canvas Area
+.canvas-area {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.canvas-wrapper {
+  position: relative;
+  background: #1a1a2e;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+
+  canvas {
+    max-width: 100%;
+    max-height: 600px;
+    object-fit: contain;
+  }
+
+  .animating-indicator {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(74, 144, 217, 0.9);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    animation: pulse 1s infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+// Current Result
+.current-result {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  border-left: 4px solid #ddd;
+
+  &.pass {
+    border-left-color: #22c55e;
+    background: #f0fdf4;
+  }
+
+  &.fail {
+    border-left-color: #ef4444;
+    background: #fef2f2;
+  }
+
+  h3 {
+    margin: 0 0 16px;
+    font-size: 1rem;
+  }
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+.result-item {
+  .label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 4px;
+  }
+
+  .value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-family: 'SF Mono', Monaco, monospace;
+  }
+
+  &.highlight .value {
+    font-size: 1.4rem;
+  }
+
+  &.status .value {
+    padding: 4px 8px;
+    border-radius: 4px;
+
+    &.pass {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    &.fail {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+  }
+}
+
+// FPS color classes
+.fps-excellent {
+  color: #16a34a !important;
+}
+
+.fps-good {
+  color: #65a30d !important;
+}
+
+.fps-warning {
+  color: #d97706 !important;
+}
+
+.fps-poor {
+  color: #dc2626 !important;
+}
+
+// Results History
+.results-history {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 30px;
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 1.2rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    th {
+      background: #e8e8e8;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+
+    tr.pass td:last-child span {
+      background: #dcfce7;
+      color: #166534;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    tr.fail td:last-child span {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+  }
+}
+
+// Methodology
+.methodology {
+  background: #f0f7ff;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #bfdbfe;
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 1.1rem;
+    color: #1e40af;
+  }
+
+  ul {
+    margin: 0 0 16px;
+    padding-left: 20px;
+
+    li {
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+  }
+
+  .note {
+    margin: 0;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    font-style: italic;
+    color: #555;
+  }
+}
+
+// Responsive
+@media (max-width: 900px) {
+  .benchmark-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .controls-panel {
+    order: 1;
+  }
+
+  .canvas-area {
+    order: 0;
+  }
+}

@@ -4,6 +4,11 @@
 
     <p>{{ subtitle() }}</p>
 
+    <nav class="app-nav">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Map Demo</a>
+      <a routerLink="/benchmark" routerLinkActive="active">Reprojection Benchmark</a>
+    </nav>
+
     <hr />
   </header>
 

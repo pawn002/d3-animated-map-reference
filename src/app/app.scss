@@ -17,6 +17,31 @@
       font-size: 1.1rem;
       margin-bottom: 1em;
     }
+
+    .app-nav {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+
+      a {
+        padding: 0.5rem 1rem;
+        text-decoration: none;
+        color: #666;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #f0f0f0;
+          color: #333;
+        }
+
+        &.active {
+          background: #667eea;
+          color: white;
+        }
+      }
+    }
   }
 
   .app-main {
