@@ -211,17 +211,208 @@ If the user is zooming/panning, the projection parameters change every frame. Ye
 
 ---
 
-## Strategies That Help (From the Benchmark)
+## Performance Optimization Strategies
 
-1. **Don't reproject during animation** — Use a lower-quality preview or skip frames
+The benchmark demonstrates that naive JavaScript reprojection struggles at higher resolutions. Here are the strategies available, ranked roughly by performance gain:
 
-2. **Use WebGL** — GPU processes millions of pixels in parallel (this is what Mapbox GL does)
+### Tier 1: GPU-Based (Fastest)
 
-3. **Accept Mercator** — If raster tiles are essential, switch projection entirely (Approach 1 from feasibility study)
+#### WebGL Shaders
 
-4. **Tile caching** — For specific zoom levels, pre-compute and cache reprojected tiles
+**Speedup: 10-50x over JavaScript**
 
-5. **Web Workers** — At least keep the main thread responsive while reprojecting
+GPUs are designed for exactly this kind of work—running the same operation on millions of pixels in parallel. A fragment shader can reproject an entire viewport in a single draw call.
+
+```glsl
+// Conceptual fragment shader (simplified)
+varying vec2 vUv;
+uniform sampler2D sourceTexture;
+
+void main() {
+  // Convert screen position to lon/lat (inverse projection)
+  vec2 lonLat = equirectangularInvert(vUv);
+
+  // Convert lon/lat to Mercator texture coordinates
+  vec2 mercatorUv = mercatorProject(lonLat);
+
+  // Sample the source texture
+  gl_FragColor = texture2D(sourceTexture, mercatorUv);
+}
+```
+
+**Pros:**
+- Massively parallel—thousands of GPU cores vs 1 CPU core
+- This is what Mapbox GL, Deck.gl, and other production libraries use
+- Can easily hit 60fps at 4K
+
+**Cons:**
+- Requires learning WebGL or using a library like `regl`
+- Shader debugging is harder than JavaScript
+- Some devices have weak GPUs (older mobile)
+
+---
+
+### Tier 2: Near-Native Speed
+
+#### WebAssembly (WASM)
+
+**Speedup: 3-5x over JavaScript**
+
+WebAssembly runs at near-native speed with predictable performance—no garbage collection pauses, no JIT warm-up variability.
+
+| Aspect | JavaScript | WebAssembly |
+|--------|------------|-------------|
+| Execution | JIT-compiled, variable | Near-native, consistent |
+| Memory | GC-managed, pauses | Linear memory, no GC |
+| SIMD | Limited | Native 128-bit SIMD |
+| Numeric types | Only float64 | i32, i64, f32, f64 |
+
+**Estimated performance (Full HD viewport):**
+
+| Implementation | Time per frame |
+|----------------|----------------|
+| JavaScript | ~120ms |
+| WASM | ~30-40ms |
+| WASM + SIMD | ~10-15ms |
+
+**Architecture:**
+
+```
+┌─────────────────────────────────────┐
+│  JavaScript (Angular)               │
+│  - Tile loading, UI, orchestration  │
+└──────────────┬──────────────────────┘
+               │ ArrayBuffer (pixels)
+               ▼
+┌─────────────────────────────────────┐
+│  WebAssembly Module                 │
+│  - reprojectFrame(src, tgt, params) │
+│  - All math inlined, SIMD batches   │
+└──────────────┬──────────────────────┘
+               │ Modified ArrayBuffer
+               ▼
+┌─────────────────────────────────────┐
+│  Canvas: ctx.putImageData()         │
+└─────────────────────────────────────┘
+```
+
+**Pros:**
+- Significant speedup with less complexity than WebGL
+- Skills transfer to other compute-intensive tasks
+- Good browser support
+
+**Cons:**
+- Data transfer overhead (copy pixels in and out)
+- Requires Rust/C++ toolchain and separate build step
+- Must reimplement projection math (can't call D3 from WASM)
+
+---
+
+### Tier 3: Architectural Optimizations
+
+#### Web Workers (Off-Main-Thread)
+
+**Speedup: 0x (same total time, but UI stays responsive)**
+
+Doesn't make reprojection faster, but moves it off the main thread so the UI doesn't freeze.
+
+```typescript
+// Main thread
+const worker = new Worker('reprojection.worker.js');
+worker.postMessage({ sourcePixels, width, height, params });
+worker.onmessage = (e) => ctx.putImageData(e.data, 0, 0);
+```
+
+**Best combined with:** WASM inside the worker for actual speedup.
+
+---
+
+#### Tile Caching / Pre-computation
+
+**Speedup: ∞ for cache hits, 0 for misses**
+
+For discrete zoom levels, pre-compute reprojected tiles and cache them. Trade memory for CPU.
+
+```typescript
+const cache = new Map<string, ImageData>();
+
+function getReprojectedTile(z: number, x: number, y: number): ImageData {
+  const key = `${z}/${x}/${y}`;
+  if (cache.has(key)) return cache.get(key)!;  // Instant
+
+  const reprojected = reprojectTile(z, x, y);  // Expensive
+  cache.set(key, reprojected);
+  return reprojected;
+}
+```
+
+**Limitation:** Doesn't help during continuous zoom animation (every frame is a new projection).
+
+---
+
+#### Adaptive Quality During Animation
+
+**Speedup: Variable (trade quality for speed)**
+
+During active pan/zoom, use a low-resolution reprojection. When the user stops, render full quality.
+
+```typescript
+let isAnimating = false;
+
+function reproject() {
+  const scale = isAnimating ? 0.25 : 1.0;  // 1/4 resolution during animation
+  const targetWidth = viewport.width * scale;
+  const targetHeight = viewport.height * scale;
+  // ... reproject at lower resolution, then scale up for display
+}
+```
+
+**Pros:** Always maintains interactivity
+**Cons:** Visible quality degradation during movement
+
+---
+
+### Tier 4: Avoiding the Problem
+
+#### Accept Web Mercator Projection
+
+**Speedup: ∞ (no reprojection needed)**
+
+If raster tiles are essential and cartographic accuracy is flexible, switch to `geoMercator()` projection. Tiles render directly without any reprojection.
+
+This is "Approach 1" from the [RASTER-TILES-FEASIBILITY.md](./RASTER-TILES-FEASIBILITY.md) study.
+
+**Pros:** Zero CPU cost, standard tile sources work perfectly
+**Cons:** Loses the project's core value proposition (projection flexibility)
+
+---
+
+### Decision Matrix
+
+| Strategy | Speedup | Complexity | When to Use |
+|----------|---------|------------|-------------|
+| WebGL | 10-50x | High | Production apps needing 60fps |
+| WASM + SIMD | 3-5x | Medium | When WebGL is overkill |
+| WASM | 2-4x | Medium | Moderate performance needs |
+| Web Workers | 0x* | Low | Keep UI responsive |
+| Tile caching | ∞/0 | Low | Discrete zoom levels only |
+| Adaptive quality | Variable | Low | Acceptable quality tradeoff |
+| Accept Mercator | ∞ | None | When projection doesn't matter |
+
+*Web Workers don't speed up the math, but prevent UI freezing.
+
+---
+
+### Recommendation for This Project
+
+For a reference implementation, we recommend:
+
+1. **Keep JavaScript reprojection** for educational clarity
+2. **Document the performance characteristics** (this document + benchmark)
+3. **Point users to WebGL solutions** (Mapbox GL, Deck.gl) for production needs
+4. **Consider WASM as a future enhancement** if there's demand for faster pure-JS solution
+
+The benchmark at `/benchmark` lets developers see the problem firsthand, which is more valuable than hiding it behind optimizations.
 
 ---
 
