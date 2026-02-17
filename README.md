@@ -2,7 +2,7 @@
 
 A reference implementation for creating D3 maps that combine **proper cartographic projection with smooth animations**. Built with Angular and D3.js, this project demonstrates how to achieve >23fps performance while maintaining geographic accuracy.
 
-> **New to D3 animation?** Start with our [Animation System Deep Dive](docs/ANIMATION.md) to understand how this project uses `requestAnimationFrame` instead of D3 transitions for geographic animations.
+> **New to D3 animation?** Start with our [Animation System Deep Dive](documentation/ANIMATION.md) to understand how this project uses `requestAnimationFrame` instead of D3 transitions for geographic animations.
 
 ## Problem Statement
 
@@ -32,10 +32,10 @@ Cartographers often struggle to create D3 maps featuring both proper projection 
 
 | Document | Description |
 |----------|-------------|
-| [Animation Deep Dive](docs/ANIMATION.md) | How `requestAnimationFrame` works and why we use it instead of D3 transitions |
-| [Architecture Overview](docs/ARCHITECTURE.md) | Service layer, data flow, and component hierarchy |
-| [Contributing Guide](docs/CONTRIBUTING.md) | Development setup, code style, and PR process |
-| [Tissot Investigation](docs/tissot-winding-order-investigation.md) | SVG polygon winding order debugging |
+| [Animation Deep Dive](documentation/ANIMATION.md) | How `requestAnimationFrame` works and why we use it instead of D3 transitions |
+| [Architecture Overview](documentation/ARCHITECTURE.md) | Service layer, data flow, and component hierarchy |
+| [Contributing Guide](documentation/CONTRIBUTING.md) | Development setup, code style, and PR process |
+| [Tissot Investigation](documentation/tissot-winding-order-investigation.md) | SVG polygon winding order debugging |
 
 ## Architecture
 
@@ -56,7 +56,7 @@ src/app/
     └── cities.json             # Sample city locations
 ```
 
-See [Architecture Overview](docs/ARCHITECTURE.md) for detailed documentation.
+See [Architecture Overview](documentation/ARCHITECTURE.md) for detailed documentation.
 
 ## Quick Start
 
@@ -176,7 +176,7 @@ const animate = () => {
 - **Performance**: Single RAF loop, auto-stops when settled
 - **Control**: Full control over projection state interpolation
 
-See [Animation Deep Dive](docs/ANIMATION.md) for complete documentation.
+See [Animation Deep Dive](documentation/ANIMATION.md) for complete documentation.
 
 ## Performance
 
@@ -257,9 +257,9 @@ This project is a reference implementation for educational and development purpo
 ## Additional Resources
 
 ### Project Documentation
-- [Animation Deep Dive](docs/ANIMATION.md) - Understanding RAF-based animation
-- [Architecture Overview](docs/ARCHITECTURE.md) - Service layer and data flow
-- [Contributing Guide](docs/CONTRIBUTING.md) - Development guidelines
+- [Animation Deep Dive](documentation/ANIMATION.md) - Understanding RAF-based animation
+- [Architecture Overview](documentation/ARCHITECTURE.md) - Service layer and data flow
+- [Contributing Guide](documentation/CONTRIBUTING.md) - Development guidelines
 
 ### External Resources
 - [D3 Documentation](https://d3js.org/)
