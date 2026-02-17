@@ -108,7 +108,7 @@ const fixedFeatures = features.map(feature => ({
 4. **src/app/components/map-container/services/map-renderer.service.ts**
    Comments at lines 113-116 explaining winding order effects on SVG fill
 
-5. **documentation/tissot-winding-order-investigation.md** (this file)
+5. **docs/tissot-winding-order-investigation.md** (this file)
    Complete investigation summary
 
 ## Key Learnings
