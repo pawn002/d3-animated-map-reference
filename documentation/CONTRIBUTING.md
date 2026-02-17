@@ -73,7 +73,7 @@ src/app/
 ├── app.ts                       # Root component
 └── stories/                     # Storybook stories
 
-docs/                            # Documentation
+documentation/                   # Documentation
 ├── ANIMATION.md                 # Animation system deep-dive
 ├── ARCHITECTURE.md              # Architecture overview
 └── CONTRIBUTING.md              # This file
